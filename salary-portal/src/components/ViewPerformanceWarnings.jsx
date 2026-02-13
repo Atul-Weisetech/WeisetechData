@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNotification } from '../contexts/NotificationContext';
 
 function ViewPerformanceWarnings({ onBack }) {
+  const { showSuccess, showError, showConfirm } = useNotification();
   const [warnings, setWarnings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -55,18 +57,22 @@ function ViewPerformanceWarnings({ onBack }) {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this warning?')) {
-      return;
-    }
-
-    try {
-      await axios.delete(`http://localhost:5000/api/performance-warnings/${id}`);
-      alert('Warning deleted successfully');
-      fetchWarnings();
-    } catch (error) {
-      console.error('Error deleting warning:', error);
-      alert('Failed to delete warning: ' + (error.response?.data?.error || error.message));
-    }
+    showConfirm(
+      'Are you sure you want to delete this warning?',
+      async () => {
+        try {
+          await axios.delete(`http://localhost:5000/api/performance-warnings/${id}`);
+          showSuccess('Warning deleted successfully');
+          fetchWarnings();
+        } catch (error) {
+          console.error('Error deleting warning:', error);
+          showError('Failed to delete warning: ' + (error.response?.data?.error || error.message));
+        }
+      },
+      () => {
+        // User cancelled, do nothing
+      }
+    );
   };
 
   const handleEdit = async (warning) => {
@@ -100,12 +106,12 @@ function ViewPerformanceWarnings({ onBack }) {
   const handleSaveEdit = async (id) => {
     try {
       await axios.put(`http://localhost:5000/api/performance-warnings/${id}`, editForm);
-      alert('Warning updated successfully');
+      showSuccess('Warning updated successfully');
       setEditingId(null);
       fetchWarnings();
     } catch (error) {
       console.error('Error updating warning:', error);
-      alert('Failed to update warning: ' + (error.response?.data?.error || error.message));
+      showError('Failed to update warning: ' + (error.response?.data?.error || error.message));
     }
   };
 
@@ -147,7 +153,7 @@ function ViewPerformanceWarnings({ onBack }) {
       setShowDetailModal(true);
     } catch (error) {
       console.error('Error fetching warning details:', error);
-      alert('Failed to load warning details: ' + (error.response?.data?.error || error.message));
+      showError('Failed to load warning details: ' + (error.response?.data?.error || error.message));
     } finally {
       setLoadingDetail(false);
     }

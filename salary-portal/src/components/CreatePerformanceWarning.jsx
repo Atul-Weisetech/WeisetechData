@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNotification } from '../contexts/NotificationContext';
 
 const initialWarningRow = () => ({ warning_type: '', notes: '' });
 
 function CreatePerformanceWarning({ onCancel, onSuccess }) {
+  const { showSuccess, showWarning, showError } = useNotification();
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
   const [employeeId, setEmployeeId] = useState('');
@@ -107,9 +109,13 @@ function CreatePerformanceWarning({ onCancel, onSuccess }) {
       
       // Show notification if employee already has previous warnings
       if (previousCount > 0) {
-        alert(`⚠️ This employee already has ${previousCount} performance warning(s).\n\nPerformance warning created successfully!`);
+        showWarning(`⚠️ This employee already has ${previousCount} performance warning(s).`);
+        // Show success notification after a short delay
+        setTimeout(() => {
+          showSuccess('Performance warning created successfully!');
+        }, 500);
       } else {
-        alert('Performance warning created successfully!');
+        showSuccess('Performance warning created successfully!');
       }
       
       setEmployeeId('');
@@ -118,11 +124,12 @@ function CreatePerformanceWarning({ onCancel, onSuccess }) {
       if (onSuccess) onSuccess();
     } catch (err) {
       console.error('Error creating performance warning:', err);
-      setError(
-        err.response?.data?.error ||
-          err.response?.data?.message ||
-          'Failed to create performance warning'
-      );
+      const errorMessage = err.response?.data?.error ||
+        err.response?.data?.message ||
+        'Failed to create performance warning';
+      setError(errorMessage);
+      // Also show error notification
+      showError(errorMessage);
     } finally {
       setLoading(false);
     }

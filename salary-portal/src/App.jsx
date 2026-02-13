@@ -15,6 +15,7 @@ import { useLocation } from "react-router-dom";
 import EditPayroll from "./pages/EditPayroll";
 import EmployeePayrolls from "./pages/EmployeePayrolls";
 import EmployeeLeaves from "./pages/EmployeeLeaves";
+import { NotificationProvider } from "./contexts/NotificationContext";
 // import AddPayrollBreakdown from "./pages/AddPayrollBreakdown";
 
 function App() {
@@ -31,8 +32,9 @@ function App() {
   };
 
   return (
-    <Router>
-      <Routes>
+    <NotificationProvider>
+      <Router>
+        <Routes>
         {/* Public Route */}
         <Route path="/" element={<Login />} />
 
@@ -125,6 +127,7 @@ function App() {
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>
+    </NotificationProvider>
   );
 }
 

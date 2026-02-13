@@ -9,6 +9,7 @@ const query = (sql, params) => new Promise((resolve, reject) => {
 
 const TABLE = 'tbl_performance_warning';
 const TYPE_TABLE = 'tbl_performance_warning_type';
+const NOTIFICATIONS_TABLE = 'tbl_notifications';
 
 // Get all performance warnings with their warning types
 const getAllPerformanceWarnings = async (req, res) => {
@@ -235,6 +236,32 @@ const createPerformanceWarning = async (req, res) => {
         description: t.description || ''
       }))
     };
+
+    // Notify employee: insert into tbl_notifications (do not block response)
+    const warningDate = newWarning[0].created_at
+      ? new Date(newWarning[0].created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+      : '';
+    const typeNames = types.map((t) => t.warning_type).filter(Boolean);
+    const warningTypesLine = typeNames.length > 0
+      ? `Warning types: ${typeNames.join(', ')}.`
+      : '';
+    const overallNotes = (newWarning[0].overall_notes || '').trim();
+    const overallNoteLine = overallNotes ? `Overall note: ${overallNotes}` : '';
+    const notificationMessage = [
+      'You have received a new performance warning.',
+      warningTypesLine,
+      overallNoteLine,
+    ]
+      .filter(Boolean)
+      .join(' ');
+
+    query(
+      `INSERT INTO ${NOTIFICATIONS_TABLE} (user_id, title, message, type, reference_id, is_read)
+       VALUES (?, ?, ?, 'performance_warning', ?, 0)`,
+      [employee_id, 'Performance Warning', notificationMessage, warningId]
+    ).catch((err) => {
+      console.error('Failed to create employee notification:', err);
+    });
 
     res.status(201).json({ 
       success: true, 

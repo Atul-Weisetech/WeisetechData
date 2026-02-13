@@ -23,6 +23,7 @@ function WelcomeEmployee() {
   const [wfhRequests, setWfhRequests] = useState([]);
   const [reviewedUpdatesCount, setReviewedUpdatesCount] = useState(0);
   const [lastSeenReviewedCount, setLastSeenReviewedCount] = useState(0);
+  const [unreadAppNotificationsCount, setUnreadAppNotificationsCount] = useState(0);
 
   const employeeId = localStorage.getItem("id");
 
@@ -219,7 +220,18 @@ function WelcomeEmployee() {
       }
     };
     fetchReviewedCount();
+
+    const fetchUnreadAppNotifications = async () => {
+      try {
+        const res = await axios.get(`http://localhost:5000/api/notifications/employee/${employeeId}/unread-count`);
+        setUnreadAppNotificationsCount(res.data?.count ?? 0);
+      } catch (e) {
+        // ignore
+      }
+    };
+    fetchUnreadAppNotifications();
     const notifInterval = setInterval(fetchReviewedCount, 15000);
+    const unreadInterval = setInterval(fetchUnreadAppNotifications, 15000);
 
     const interval = setInterval(() => {
       if (timerState.isTracking) {
@@ -238,6 +250,7 @@ function WelcomeEmployee() {
     return () => {
       clearInterval(interval);
       clearInterval(notifInterval);
+      clearInterval(unreadInterval);
     };
   }, [employeeId, timerState.isTracking, timerStorageKey, fetchEmployeeData]);
 
@@ -676,7 +689,11 @@ function WelcomeEmployee() {
                 Stay updated with important alerts
               </p>
             </div>
-            <NotificationCenter employeeId={employeeId} embedded={true} />
+            <NotificationCenter
+              employeeId={employeeId}
+              embedded={true}
+              onUnreadCountChange={setUnreadAppNotificationsCount}
+            />
           </div>
         );
 
@@ -769,7 +786,7 @@ function WelcomeEmployee() {
                   { id: "leave-requests", label: "Leave Requests", icon: "" },
                   { id: "work-from-home", label: "Work From Home", icon: "" },
                 ].map((item) => {
-                  const hasUnseen = item.showUpdateBadge && reviewedUpdatesCount > lastSeenReviewedCount;
+                  const hasUnseen = item.showUpdateBadge && (reviewedUpdatesCount > lastSeenReviewedCount || unreadAppNotificationsCount > 0);
                   return (
                     <li key={item.id}>
                       <button
@@ -851,7 +868,7 @@ function WelcomeEmployee() {
                 { id: "leave-requests", label: "Leave Requests", icon: "" },
                 { id: "work-from-home", label: "Work From Home", icon: "" },
               ].map((item) => {
-                const hasUnseen = item.showUpdateBadge && reviewedUpdatesCount > lastSeenReviewedCount;
+                const hasUnseen = item.showUpdateBadge && (reviewedUpdatesCount > lastSeenReviewedCount || unreadAppNotificationsCount > 0);
                 return (
                   <li key={item.id}>
                     <button

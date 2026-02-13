@@ -32,7 +32,7 @@ function PerformanceWarning() {
             onClick={() => setActiveView('create')}
             className="bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105"
           >
-            ➕ Create Warning
+            + Create Warning
           </button>
           <button
             onClick={() => setShowManageTypes(true)}
