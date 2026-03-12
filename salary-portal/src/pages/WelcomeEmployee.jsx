@@ -784,7 +784,7 @@ function WelcomeEmployee() {
                   { id: "payrolls", label: "Payrolls", icon: "" },
                   { id: "notifications", label: "Notifications", icon: "", showUpdateBadge: true },
                   { id: "leave-requests", label: "Leave Requests", icon: "" },
-                  { id: "work-from-home", label: "Work From Home", icon: "" },
+                  { id: "work-from-home", label: "Work From Home Requests", icon: "" },
                 ].map((item) => {
                   const hasUnseen = item.showUpdateBadge && (reviewedUpdatesCount > lastSeenReviewedCount || unreadAppNotificationsCount > 0);
                   return (
@@ -866,7 +866,7 @@ function WelcomeEmployee() {
                 { id: "payrolls", label: "Payrolls", icon: "" },
                 { id: "notifications", label: "Notifications", icon: "", showUpdateBadge: true },
                 { id: "leave-requests", label: "Leave Requests", icon: "" },
-                { id: "work-from-home", label: "Work From Home", icon: "" },
+                { id: "work-from-home", label: "Work From Home Requests", icon: "" },
               ].map((item) => {
                 const hasUnseen = item.showUpdateBadge && (reviewedUpdatesCount > lastSeenReviewedCount || unreadAppNotificationsCount > 0);
                 return (

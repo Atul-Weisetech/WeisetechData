@@ -981,7 +981,7 @@ export default function Welcome() {
                                 <span className="sm:hidden">Breakdown</span>
                               </button>
                             </div>
-                          )}
+                          )},
                         </td>
                       </tr>
                     ))}
