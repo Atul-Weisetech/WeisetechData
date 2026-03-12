@@ -9,12 +9,14 @@ import ManageLeaveRequests from "../components/ManageLeaveRequests";
 import ManageWorkFromHome from "../components/ManageWorkFromHome";
 import PerformanceWarning from "../components/PerformanceWarning";
 import DownloadPayrollPDF from "../components/DownloadPayrollPDF";
+import CustomConfirmDialog from "../components/CustomConfirmDialog";
 
 export default function Welcome() {
   const [toast, setToast] = useState({ show: false, message: "", type: "" });
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   useEffect(() => {
     if (toast.show) {
       const timer = setTimeout(() => {
@@ -440,7 +442,7 @@ export default function Welcome() {
                   </>
                 )}
                 <button
-                  onClick={handleLogout}
+                  onClick={() => setShowLogoutConfirm(true)}
                   className="bg-red-600 text-white px-3 py-2 rounded hover:bg-red-700 whitespace-nowrap"
                 >
                   Logout
@@ -563,8 +565,8 @@ export default function Welcome() {
                         )}
                         <button
                           onClick={() => {
-                            handleLogout();
                             setIsActionsMenuOpen(false);
+                            setShowLogoutConfirm(true);
                           }}
                           className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                         >
@@ -1090,6 +1092,15 @@ export default function Welcome() {
       )}
         </main>
       </div>
+
+      <CustomConfirmDialog
+        show={showLogoutConfirm}
+        message="Are you sure you want to logout?"
+        confirmText="Logout"
+        cancelText="Cancel"
+        onConfirm={handleLogout}
+        onCancel={() => setShowLogoutConfirm(false)}
+      />
     </div>
   );
 }

@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/weisetechLogo.png";
+import CustomConfirmDialog from "./CustomConfirmDialog";
 
 export default function Navbar({
   onShowLeaveRequest,
@@ -9,6 +10,7 @@ export default function Navbar({
   onMenuClick,
 }) {
   const navigate = useNavigate();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem("user");
@@ -82,12 +84,21 @@ export default function Navbar({
 
         {/* Logout Button */}
         <button
-          onClick={handleLogout}
+          onClick={() => setShowLogoutConfirm(true)}
           className="bg-gradient-to-r from-red-500 to-red-700 text-white px-4 sm:px-5 py-2 rounded-xl font-semibold hover:from-red-600 hover:to-red-800 transition-all duration-300 shadow-md hover:shadow-lg"
         >
           Logout
         </button>
       </div>
+
+      <CustomConfirmDialog
+        show={showLogoutConfirm}
+        message="Are you sure you want to logout?"
+        confirmText="Logout"
+        cancelText="Cancel"
+        onConfirm={handleLogout}
+        onCancel={() => setShowLogoutConfirm(false)}
+      />
     </nav>
   );
 }
