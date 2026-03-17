@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Navbar from "../components/Navbar";
-import EmployeeTimeTracker from "../components/EmployeeTimeTracker";
 import LeaveRequest from "../components/LeaveRequest";
 import WorkFromHomeRequest from "../components/WorkFromHomeRequest";
 import NotificationCenter from "../components/NotificationCenter";
@@ -21,6 +20,8 @@ function WelcomeEmployee() {
   const [joiningDate, setJoiningDate] = useState("");
   const [pendingLeaves, setPendingLeaves] = useState(0);
   const [wfhRequests, setWfhRequests] = useState([]);
+  const [leaveList, setLeaveList] = useState([]);
+  const [leaveFilter, setLeaveFilter] = useState("all");
   const [reviewedUpdatesCount, setReviewedUpdatesCount] = useState(0);
   const [lastSeenReviewedCount, setLastSeenReviewedCount] = useState(0);
   const [unreadAppNotificationsCount, setUnreadAppNotificationsCount] = useState(0);
@@ -32,21 +33,8 @@ function WelcomeEmployee() {
     [employeeId]
   );
 
-  const [timerState, setTimerState] = useState({
-    isTracking: false,
-    elapsedTime: 0,
-    startTime: "",
-    activityLogs: [],
-    currentActivityType: "Working time",
-    lastUpdate: Date.now(),
-  });
-  const [isTimeTrackerOpen, setIsTimeTrackerOpen] = useState(false);
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const timerStorageKey = useMemo(
-    () => (employeeId ? `timeTrackerState_${employeeId}` : "timeTrackerState"),
-    [employeeId]
-  );
 
   const normalizeDateValue = (value) => {
     if (!value) return null;
@@ -58,36 +46,6 @@ function WelcomeEmployee() {
       return `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}`;
     }
     return value;
-  };
-
-  // Function to calculate remaining leaves
-  const calculateRemainingLeave = (startDateStr, leaveUsed = 0) => {
-    const totalAnnualLeave = 14;
-    const accrualPerMonth = totalAnnualLeave / 12;
-
-    const normalizedStart = normalizeDateValue(startDateStr);
-    const startDate = normalizedStart ? new Date(normalizedStart) : new Date();
-    const today = new Date();
-
-    const startYear = startDate.getFullYear();
-    const currentYear = today.getFullYear();
-
-    // If started before current year, give full 14 days
-    if (startYear < currentYear) {
-      return totalAnnualLeave - leaveUsed;
-    }
-
-    // If started this year, calculate whole months accrued
-    let months =
-      (today.getFullYear() - startDate.getFullYear()) * 12 +
-      (today.getMonth() - startDate.getMonth());
-
-    if (months < 0) months = 0; // no negative months
-    if (months > 12) months = 12; // cap at 12
-
-    const accrued = months * accrualPerMonth;
-
-    return accrued - leaveUsed;
   };
 
   // Function to calculate days between two dates
@@ -159,11 +117,11 @@ function WelcomeEmployee() {
               0
             );
 
+          setLeaveList(leaveRequests);
           setLeaveUsed(approvedLeaves);
           setPendingLeaves(pendingCount);
 
-          const remaining = calculateRemainingLeave(joinDate, approvedLeaves);
-          setRemainingLeaves(Math.max(0, Number(remaining.toFixed(1))));
+          setRemainingLeaves(Math.max(0, totalLeaves - approvedLeaves));
 
           const wfhRes = await axios.get(
             `http://localhost:5000/api/work-from-home/employee/${employeeId}`
@@ -186,19 +144,6 @@ function WelcomeEmployee() {
     if (storedName) setEmployeeName(storedName);
     const storedDesignation = localStorage.getItem("designation");
     if (storedDesignation) setDesignation(storedDesignation);
-
-    const savedTimer = localStorage.getItem(timerStorageKey);
-    if (savedTimer) {
-      const parsedTimer = JSON.parse(savedTimer);
-      if (parsedTimer.isTracking) {
-        const timeSinceLastUpdate = Math.floor(
-          (Date.now() - parsedTimer.lastUpdate) / 1000
-        );
-        parsedTimer.elapsedTime += timeSinceLastUpdate;
-        parsedTimer.lastUpdate = Date.now();
-      }
-      setTimerState(parsedTimer);
-    }
 
     fetchEmployeeData();
 
@@ -233,26 +178,11 @@ function WelcomeEmployee() {
     const notifInterval = setInterval(fetchReviewedCount, 15000);
     const unreadInterval = setInterval(fetchUnreadAppNotifications, 15000);
 
-    const interval = setInterval(() => {
-      if (timerState.isTracking) {
-        setTimerState((prev) => {
-          const newState = {
-            ...prev,
-            elapsedTime: prev.elapsedTime + 1,
-            lastUpdate: Date.now(),
-          };
-          localStorage.setItem(timerStorageKey, JSON.stringify(newState));
-          return newState;
-        });
-      }
-    }, 1000);
-
     return () => {
-      clearInterval(interval);
       clearInterval(notifInterval);
       clearInterval(unreadInterval);
     };
-  }, [employeeId, timerState.isTracking, timerStorageKey, fetchEmployeeData]);
+  }, [employeeId, fetchEmployeeData]);
 
   useEffect(() => {
     if (!lastSeenStorageKey) return;
@@ -285,15 +215,6 @@ function WelcomeEmployee() {
     }, 60000);
     return () => clearInterval(refresh);
   }, [employeeId, fetchEmployeeData]);
-
-  const handleTimerUpdate = (newState) => {
-    const updatedState = {
-      ...newState,
-      lastUpdate: Date.now(),
-    };
-    setTimerState(updatedState);
-    localStorage.setItem(timerStorageKey, JSON.stringify(updatedState));
-  };
 
   const handleDownload = async (payslipData) => {
     try {
@@ -393,15 +314,6 @@ function WelcomeEmployee() {
     }
   };
 
-  const formatTime = (seconds) => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${hrs.toString().padStart(2, "0")}:${mins
-      .toString()
-      .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
-
   const renderContent = () => {
     switch (activeSection) {
       case "dashboard":
@@ -418,24 +330,24 @@ function WelcomeEmployee() {
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
-                <button
+                {/* <button
                   onClick={() => setActiveSection("notifications")}
                   className="px-5 py-3 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm"
                 >
                   View Notifications
-                </button>
-                <button
+                </button> */}
+                {/* <button
                   onClick={() => setIsLeaveModalOpen(true)}
                   className="px-5 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold shadow-md transition-colors"
                 >
                   Apply for Leave
-                </button>
-                <button
+                </button> */}
+                {/* <button
                   onClick={() => setIsTimeTrackerOpen(true)}
                   className="px-5 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold shadow-md transition-colors"
                 >
                   Open Time Tracker
-                </button>
+                </button> */}
               </div>
             </div>
 
@@ -475,43 +387,6 @@ function WelcomeEmployee() {
                     ></div>
                   </div>
                 </div>
-              </div>
-
-              {/* Time Tracker Card */}
-              <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-700">
-                    Time Tracker
-                  </h3>
-                  {/* <span className="text-2xl">⏱️</span> */}
-                </div>
-                <div className="text-center mb-4">
-                  {timerState.isTracking ? (
-                    <>
-                      <div className="text-2xl font-mono font-bold text-green-600 mb-2">
-                        {formatTime(timerState.elapsedTime)}
-                      </div>
-                      <p className="text-sm text-green-600 font-medium">
-                        Currently Tracking
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <div className="text-xl text-gray-400 mb-2">--:--:--</div>
-                      <p className="text-sm text-gray-500">Ready to start</p>
-                    </>
-                  )}
-                </div>
-                <button
-                  onClick={() => setIsTimeTrackerOpen(true)}
-                  className={`w-full py-3 rounded-xl font-semibold transition-all duration-300 ${
-                    timerState.isTracking
-                      ? "bg-primary-600 hover:bg-primary-700 text-white shadow-lg"
-                      : "bg-primary-600 hover:bg-primary-700 text-white shadow-lg"
-                  }`}
-                >
-                  {timerState.isTracking ? "Manage Timer" : "Start Timer"}
-                </button>
               </div>
 
               {/* Quick Stats Card 1 */}
@@ -697,23 +572,120 @@ function WelcomeEmployee() {
           </div>
         );
 
-      case "leave-requests":
+      case "leave-requests": {
+        const filterOptions = ["all", "approved", "pending", "declined"];
+
+        // Only show leaves belonging to the logged-in employee
+        const myLeaves = leaveList.filter(
+          (l) => String(l.employee_id) === String(employeeId)
+        );
+
+        const filteredLeaves = leaveFilter === "all"
+          ? myLeaves
+          : myLeaves.filter((l) => {
+              const s = (l.status_text || l.status || "").toLowerCase();
+              if (leaveFilter === "pending") return s === "pending" || s === "requested";
+              return s === leaveFilter;
+            });
+
+        const getStatusBadge = (statusText) => {
+          const s = (statusText || "").toLowerCase();
+          const styles = {
+            approved: "bg-green-100 text-green-800 border-green-200",
+            declined: "bg-red-100 text-red-800 border-red-200",
+            requested: "bg-yellow-100 text-yellow-800 border-yellow-200",
+            pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
+          };
+          return (
+            <span className={`px-3 py-1 rounded-full text-xs font-medium border ${styles[s] || "bg-gray-100 text-gray-700 border-gray-200"}`}>
+              {s.charAt(0).toUpperCase() + s.slice(1)}
+            </span>
+          );
+        };
+
         return (
-          <div className="p-8">
-            <div className="mb-8">
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                Leave Requests
-              </h1>
-              <p className="text-lg text-gray-600">
-                Manage your time off and vacations
-              </p>
+          <div className="p-4 sm:p-8 space-y-8">
+            {/* Header */}
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Leave Requests</h1>
+              <p className="text-gray-600">Apply for leave and view your leave history</p>
             </div>
-            <LeaveRequest
-              embedded={true}
-              onSuccess={() => fetchEmployeeData({ showLoader: false })}
-            />
+
+            {/* Apply Form */}
+            <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Apply for Leave</h2>
+              <LeaveRequest
+                embedded={true}
+                remainingLeaves={remainingLeaves}
+                onSuccess={() => fetchEmployeeData({ showLoader: false })}
+              />
+            </div>
+
+            {/* Leave History */}
+            <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+                <h2 className="text-xl font-semibold text-gray-800">My Leave History</h2>
+                <div className="flex gap-2 flex-wrap">
+                  {filterOptions.map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setLeaveFilter(f)}
+                      className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                        leaveFilter === f
+                          ? "bg-indigo-600 text-white"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      {f.charAt(0).toUpperCase() + f.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {myLeaves.length === 0 ? (
+                <div className="text-center py-10 text-gray-500">
+                  <p className="text-lg">No leave requests found.</p>
+                </div>
+              ) : filteredLeaves.length === 0 ? (
+                <div className="text-center py-10 text-gray-500">
+                  <p>No {leaveFilter} leave requests.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-sm">
+                    <thead className="bg-gray-50 text-gray-600 uppercase text-xs">
+                      <tr>
+                        <th className="px-4 py-3 text-left">#</th>
+                        <th className="px-4 py-3 text-left">From</th>
+                        <th className="px-4 py-3 text-left">To</th>
+                        <th className="px-4 py-3 text-left">Days</th>
+                        <th className="px-4 py-3 text-left">Reason</th>
+                        <th className="px-4 py-3 text-left">Status</th>
+                        <th className="px-4 py-3 text-left">Applied On</th>
+                        <th className="px-4 py-3 text-left">Reviewed By</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {filteredLeaves.map((req, idx) => (
+                        <tr key={req.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-gray-500">{idx + 1}</td>
+                          <td className="px-4 py-3 whitespace-nowrap">{req.from_date ? new Date(req.from_date).toLocaleDateString() : "—"}</td>
+                          <td className="px-4 py-3 whitespace-nowrap">{req.to_date ? new Date(req.to_date).toLocaleDateString() : "—"}</td>
+                          <td className="px-4 py-3">{req.number_of_days}</td>
+                          <td className="px-4 py-3 max-w-[180px] truncate" title={req.description}>{req.description || "—"}</td>
+                          <td className="px-4 py-3">{getStatusBadge(req.status_text || req.status)}</td>
+                          <td className="px-4 py-3 whitespace-nowrap">{req.applied_date ? new Date(req.applied_date).toLocaleDateString() : "—"}</td>
+                          <td className="px-4 py-3">{req.reviewed_by || "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         );
+      }
 
       case "work-from-home":
         return (
@@ -741,10 +713,9 @@ function WelcomeEmployee() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       <Navbar
-        onShowLeaveRequest={() => setIsLeaveModalOpen(true)}
-        onShowTimeTracker={() => setIsTimeTrackerOpen(true)}
-        timerState={timerState}
         onMenuClick={() => setIsSidebarOpen(true)}
+        notificationCount={unreadAppNotificationsCount + Math.max(0, reviewedUpdatesCount - lastSeenReviewedCount)}
+        onNotificationClick={() => setActiveSection("notifications")}
       />
 
       {/* Mobile Sidebar Drawer */}
@@ -813,26 +784,24 @@ function WelcomeEmployee() {
                 })}
               </ul>
             </nav>
-          </div>
-        </div>
-      )}
 
-      {isTimeTrackerOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setIsTimeTrackerOpen(false)}
-              className="absolute -top-4 -right-4 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg hover:bg-red-600"
-              aria-label="Close time tracker"
-            >
-              ×
-            </button>
-            <EmployeeTimeTracker
-              onClose={() => setIsTimeTrackerOpen(false)}
-              initialTimerState={timerState}
-              onTimerUpdate={handleTimerUpdate}
-            />
+            {/* Logout in mobile drawer */}
+            <div className="px-6 pb-6">
+              <button
+                onClick={() => {
+                  setIsSidebarOpen(false);
+                  localStorage.removeItem("user");
+                  localStorage.removeItem("id");
+                  localStorage.removeItem("name");
+                  localStorage.removeItem("designation");
+                  window.location.href = "/";
+                }}
+                className="w-full px-6 py-4 rounded-2xl bg-gradient-to-r from-red-500 to-red-700 text-white font-semibold text-left flex items-center space-x-4 hover:from-red-600 hover:to-red-800 transition-all duration-300 shadow-md"
+              >
+                <span className="text-xl">🚪</span>
+                <span>Logout</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -842,6 +811,7 @@ function WelcomeEmployee() {
           <div className="relative">
             <LeaveRequest
               onClose={() => setIsLeaveModalOpen(false)}
+              remainingLeaves={remainingLeaves}
               onSuccess={() => fetchEmployeeData({ showLoader: false })}
             />
           </div>
