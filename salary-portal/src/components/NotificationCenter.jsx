@@ -165,40 +165,57 @@ export default function NotificationCenter({
 
     return (
       <div className="max-h-[60vh] overflow-auto space-y-6">
-        {/* App notifications (e.g. performance warning) */}
+        {/* App notifications (payroll, performance warnings, etc.) */}
         {hasAppNotifications && (
           <div>
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">Alerts &amp; Warnings</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">Alerts &amp; Notifications</h3>
             <ul className="space-y-2">
-              {appNotifications.map((n) => (
-                <li key={n.id}>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenAppNotification(n)}
-                    className={`w-full text-left px-4 py-3 rounded-lg border transition-colors ${
-                      n.is_read
-                        ? "bg-gray-50 border-gray-200 text-gray-700"
-                        : "bg-amber-50 border-amber-200 text-gray-900 font-medium"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <span className="block font-semibold text-gray-900">{n.title}</span>
-                        <span className="block text-sm mt-1 text-gray-600 whitespace-pre-wrap">{n.message}</span>
-                        <span className="block text-xs text-gray-500 mt-1">{formatDate(n.created_at)}</span>
-                        {n.type === "performance_warning" && n.reference_id && (
-                          <span className="inline-block text-xs font-medium text-primary-600 mt-2">
-                            Tap to view full details →
-                          </span>
+              {appNotifications.map((n) => {
+                const isPayroll = n.type === "payroll";
+                const unreadClass = isPayroll
+                  ? "bg-green-50 border-green-200 text-gray-900 font-medium"
+                  : "bg-amber-50 border-amber-200 text-gray-900 font-medium";
+                const dotClass = isPayroll ? "bg-green-500" : "bg-amber-500";
+                return (
+                  <li key={n.id}>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenAppNotification(n)}
+                      className={`w-full text-left px-4 py-3 rounded-lg border transition-colors ${
+                        n.is_read ? "bg-gray-50 border-gray-200 text-gray-700" : unreadClass
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            {isPayroll && (
+                              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700 border border-green-200">
+                                💰 Payroll
+                              </span>
+                            )}
+                            {n.type === "performance_warning" && (
+                              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200">
+                                ⚠️ Warning
+                              </span>
+                            )}
+                          </div>
+                          <span className="block font-semibold text-gray-900">{n.title}</span>
+                          <span className="block text-sm mt-1 text-gray-600 whitespace-pre-wrap">{n.message}</span>
+                          <span className="block text-xs text-gray-500 mt-1">{formatDate(n.created_at)}</span>
+                          {n.type === "performance_warning" && n.reference_id && (
+                            <span className="inline-block text-xs font-medium text-primary-600 mt-2">
+                              Tap to view full details →
+                            </span>
+                          )}
+                        </div>
+                        {!n.is_read && (
+                          <span className={`flex-shrink-0 w-2 h-2 rounded-full ${dotClass}`} aria-label="Unread" />
                         )}
                       </div>
-                      {!n.is_read && (
-                        <span className="flex-shrink-0 w-2 h-2 rounded-full bg-amber-500" aria-label="Unread" />
-                      )}
-                    </div>
-                  </button>
-                </li>
-              ))}
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         )}

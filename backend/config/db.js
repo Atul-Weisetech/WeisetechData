@@ -1,9 +1,9 @@
 const mysql = require('mysql2');
 const connection = mysql.createConnection({
-  host: '127.0.0.1',
-  user: 'nodeuser',
-  password: 'Node@123',
-  database: 'hrtools'
+  host: 'mysql.railway.internal',
+  user: 'root',
+  password: 'dAokQXNDXdgKqmstOXyeZChySuUyDUgt',
+  database: 'railway'
 });
 
 connection.connect(err => {

@@ -8,6 +8,8 @@ export default function Navbar({
   onShowTimeTracker,
   timerState,
   onMenuClick,
+  notificationCount = 0,
+  onNotificationClick,
 }) {
   const navigate = useNavigate();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -28,6 +30,7 @@ export default function Navbar({
   };
 
   return (
+    <>
     <nav className="flex flex-wrap justify-between items-center gap-3 px-4 sm:px-6 lg:px-8 py-3 sm:py-4 bg-white/90 backdrop-blur-lg shadow-lg rounded-b-2xl border-b border-slate-200">
       <div className="flex items-center gap-3 min-w-0">
         {onMenuClick && (
@@ -82,23 +85,44 @@ export default function Navbar({
           <span className="text-sm">Apply for Leave</span>
         </button> */}
 
-        {/* Logout Button */}
+        {/* Notification Bell */}
+        {onNotificationClick && (
+          <button
+            type="button"
+            onClick={onNotificationClick}
+            className="relative inline-flex items-center justify-center w-10 h-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 shadow-sm transition-all"
+            aria-label="Notifications"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            {notificationCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                {notificationCount > 99 ? "99+" : notificationCount}
+              </span>
+            )}
+          </button>
+        )}
+
+        {/* Logout Button — hidden on mobile (shown in sidebar drawer instead) */}
         <button
           onClick={() => setShowLogoutConfirm(true)}
-          className="bg-gradient-to-r from-red-500 to-red-700 text-white px-4 sm:px-5 py-2 rounded-xl font-semibold hover:from-red-600 hover:to-red-800 transition-all duration-300 shadow-md hover:shadow-lg"
+          className="hidden lg:block bg-gradient-to-r from-red-500 to-red-700 text-white px-4 sm:px-5 py-2 rounded-xl font-semibold hover:from-red-600 hover:to-red-800 transition-all duration-300 shadow-md hover:shadow-lg"
         >
           Logout
         </button>
       </div>
 
-      <CustomConfirmDialog
-        show={showLogoutConfirm}
-        message="Are you sure you want to logout?"
-        confirmText="Logout"
-        cancelText="Cancel"
-        onConfirm={handleLogout}
-        onCancel={() => setShowLogoutConfirm(false)}
-      />
     </nav>
+
+    <CustomConfirmDialog
+      show={showLogoutConfirm}
+      message="Are you sure you want to logout?"
+      confirmText="Logout"
+      cancelText="Cancel"
+      onConfirm={handleLogout}
+      onCancel={() => setShowLogoutConfirm(false)}
+    />
+    </>
   );
 }

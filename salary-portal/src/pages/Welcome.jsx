@@ -207,7 +207,7 @@ export default function Welcome() {
     const date = new Date(`${monthName} 1, ${year}`);
     if (isNaN(date)) return "Invalid Month";
 
-    return date.toLocaleString("en-IN", { month: "long", year: "numeric" });
+    return `${date.toLocaleString("en-IN", { month: "long" })} ${year}`;
   };
 
   const publishAllForMonth = async (monthKey) => {
@@ -934,7 +934,7 @@ export default function Welcome() {
                           </td>
 
                           <td className="px-2 sm:px-4 py-2 whitespace-nowrap">
-                            ₹{parseFloat(p.payroll_amount).toFixed(3)}
+                            ₹{parseFloat(p.payroll_amount).toFixed(2)}
                           </td>
                           <td className="px-2 sm:px-4 py-2 whitespace-nowrap">
                             {new Date(p.payroll_date).toLocaleDateString(
@@ -983,7 +983,7 @@ export default function Welcome() {
                                 <span className="sm:hidden">Breakdown</span>
                               </button>
                             </div>
-                          )},
+                          )}
                         </td>
                       </tr>
                     ))}
