@@ -1,29 +1,23 @@
 const mysql = require('mysql2');
-const connection = mysql.createConnection({
+
+const pool = mysql.createPool({
   host: 'c1115867.sgvps.net',
   user: 'utj6bmhsz3vjf',
   password: 'o5rdzfwc3z0w',
-  database: 'dbwar8amqpkhso'
+  database: 'dbwar8amqpkhso',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
 });
 
-connection.connect(err => {
+// Test connection on startup
+pool.getConnection((err, connection) => {
   if (err) {
-    console.error('Error connecting to MySQL database:', err);
-    console.log('Please check if MySQL server is running and database "hr_tool" exists');
+    console.error('MySQL connection error:', err);
   } else {
     console.log('MySQL connected');
+    connection.release();
   }
 });
 
-// Add error handler for future errors
-connection.on('error', (err) => {
-  console.error('MySQL connection error:', err);
-  if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-    console.log('Database connection was closed. Attempting to reconnect...');
-    // You could implement reconnection logic here
-  } else {
-    throw err;
-  }
-});
-
-module.exports = connection;
+module.exports = pool;
