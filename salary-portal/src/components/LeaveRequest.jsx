@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-function LeaveRequest({ onClose, embedded = false, onSuccess }) {
+function LeaveRequest({ onClose, embedded = false, onSuccess, remainingLeaves }) {
   const [formData, setFormData] = useState({
     from_date: "",
     to_date: "",
@@ -160,7 +160,24 @@ function LeaveRequest({ onClose, embedded = false, onSuccess }) {
         </button>
       )}
 
-      <h2 className="text-xl font-semibold mb-4">Apply for Leave</h2>
+     
+
+      {/* Paid leave exceeded warning */}
+      {remainingLeaves !== undefined && formData.number_of_days > remainingLeaves && (
+        <div className="mb-3 p-3 bg-amber-50 border border-amber-300 rounded-lg text-sm text-amber-800">
+          ⚠️ <strong>Paid leave limit reached.</strong> You only have{" "}
+          <strong>{remainingLeaves} paid leave{remainingLeaves !== 1 ? "s" : ""}</strong> remaining.
+          Requesting <strong>{formData.number_of_days} days</strong> means{" "}
+          <strong>{formData.number_of_days - remainingLeaves} day{formData.number_of_days - remainingLeaves !== 1 ? "s" : ""}</strong> will be <span className="text-red-700 font-semibold">unpaid leave</span>.
+        </div>
+      )}
+
+      {/* No paid leaves left warning */}
+      {remainingLeaves !== undefined && remainingLeaves <= 0 && (
+        <div className="mb-3 p-3 bg-red-50 border border-red-300 rounded-lg text-sm text-red-800">
+          🚫 <strong>Your paid leaves are exhausted.</strong> Any new leave request will be counted as <span className="font-semibold">unpaid leave</span>.
+        </div>
+      )}
 
       {error && (
         <div className="mb-3 p-2 bg-red-100 text-red-700 rounded border border-red-200 text-sm">
@@ -173,7 +190,6 @@ function LeaveRequest({ onClose, embedded = false, onSuccess }) {
           {success}
         </div>
       )}
-
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">

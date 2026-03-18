@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import logo from "../assets/weisetechLogo.png";
 import CustomConfirmDialog from "./CustomConfirmDialog";
 
+<<<<<<< Updated upstream
 export default function Navbar({
   onShowLeaveRequest,
   onShowTimeTracker,
@@ -11,6 +12,9 @@ export default function Navbar({
   notificationCount = 0,
   onNotificationClick,
 }) {
+=======
+export default function Navbar({ onMenuClick, notificationCount = 0, onNotificationClick }) {
+>>>>>>> Stashed changes
   const navigate = useNavigate();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
@@ -20,13 +24,6 @@ export default function Navbar({
     localStorage.removeItem("name");
     localStorage.removeItem("designation");
     navigate("/");
-  };
-
-  const formatTime = (seconds) => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${hrs.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
   return (
@@ -51,30 +48,25 @@ export default function Navbar({
       </div>
 
       <div className="flex items-center gap-3 sm:gap-4 flex-wrap justify-end">
-        {/* Time Tracker Button */}
-        {timerState && (
+        {/* Notification Bell */}
+        {onNotificationClick && (
           <button
-            onClick={onShowTimeTracker}
-            className={`flex items-center gap-3 py-2 px-3 sm:px-4 rounded-xl font-semibold transition-all duration-300 shadow-md hover:shadow-lg ${
-              timerState.isTracking
-                ? "bg-green-600 hover:bg-green-700 text-white"
-                : "bg-blue-600 hover:bg-blue-700 text-white"
-            }`}
+            type="button"
+            onClick={onNotificationClick}
+            className="relative inline-flex items-center justify-center w-10 h-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 shadow-sm transition-all"
+            aria-label="Notifications"
           >
-            {/* <span>⏱️</span> */}
-            <div className="flex flex-col items-start">
-              <span className="text-sm">Time Tracker</span>
-              {timerState.isTracking && (
-                <span className="text-xs font-mono font-bold">
-                  {formatTime(timerState.elapsedTime)}
-                </span>
-              )}
-            </div>
-            {timerState.isTracking && (
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            {notificationCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                {notificationCount > 99 ? "99+" : notificationCount}
+              </span>
             )}
           </button>
         )}
+<<<<<<< Updated upstream
 
         {/* Apply for Leave Button */}
         {/* <button
@@ -104,6 +96,8 @@ export default function Navbar({
           </button>
         )}
 
+=======
+>>>>>>> Stashed changes
         {/* Logout Button — hidden on mobile (shown in sidebar drawer instead) */}
         <button
           onClick={() => setShowLogoutConfirm(true)}
