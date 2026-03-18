@@ -48,6 +48,6 @@ Thumbs.db
 *.mov
 *.wmv
 
-salary-portal/vite.config.js
+# salary-portal/vite.config.js
 
 backend/.env
