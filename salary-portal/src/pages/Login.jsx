@@ -74,7 +74,7 @@ export default function Login() {
         <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 border border-gray-200 relative flex flex-col items-center">
           <h2 className="text-3xl font-bold text-blue-600 mb-6 text-center">
             {" "}
-            Sign Inn{" "}
+            Sign In{" "}
           </h2>
 
           <form onSubmit={formik.handleSubmit} className="w-full">
@@ -87,7 +87,7 @@ export default function Login() {
                 type="email"
                 name="email"
                 autoComplete="email"
-                placeholder="youu@example.com"
+                placeholder="you@example.com"
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
                 value={formik.values.email}
                 onChange={formik.handleChange}
