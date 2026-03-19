@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
-
-const API_BASE = `${API_BASE}`;
+import API_BASE from "../config";
 
 export default function NotificationCenter({
   employeeId,
