@@ -44,7 +44,7 @@ function ViewPerformanceWarnings({ onBack }) {
   const fetchWarnings = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('http://localhost:5000/api/performance-warnings');
+      const res = await axios.get('https://weisetechdata.onrender.com/api/performance-warnings');
       setWarnings(res.data?.data || res.data || []);
       setError('');
     } catch (error) {

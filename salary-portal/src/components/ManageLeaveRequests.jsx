@@ -20,7 +20,7 @@ function ManageLeaveRequests() {
 
   const fetchLeaveRequests = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/leave-requests');
+      const res = await axios.get('https://weisetechdata.onrender.com/api/leave-requests');
       console.log('Leave requests fetched:', res.data);
       setLeaveRequests(res.data?.data || res.data || []);
     } catch (error) {
@@ -34,7 +34,7 @@ function ManageLeaveRequests() {
 
   const fetchPendingCount = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/leave-requests/pending-count');
+      const res = await axios.get('https://weisetechdata.onrender.com/api/leave-requests/pending-count');
       const count = res.data?.data?.pending_leave_requests ?? 0;
       setPendingCount(count);
     } catch (error) {

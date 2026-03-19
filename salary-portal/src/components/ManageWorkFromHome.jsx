@@ -20,7 +20,7 @@ function ManageWorkFromHome() {
 
   const fetchRequests = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/work-from-home');
+      const res = await axios.get('https://weisetechdata.onrender.com/api/work-from-home');
       setRequests(res.data?.data || res.data || []);
     } catch (error) {
       console.error('Error fetching work from home requests:', error);
@@ -33,7 +33,7 @@ function ManageWorkFromHome() {
 
   const fetchPendingCount = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/work-from-home/pending-count');
+      const res = await axios.get('https://weisetechdata.onrender.com/api/work-from-home/pending-count');
       setPendingCount(res.data?.data?.pending_work_from_home_requests ?? 0);
     } catch (error) {
       console.error('Error fetching pending count:', error);

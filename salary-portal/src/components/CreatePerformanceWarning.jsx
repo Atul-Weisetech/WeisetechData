@@ -42,7 +42,7 @@ function CreatePerformanceWarning({ onCancel, onSuccess }) {
 
   const fetchEmployees = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/employees');
+      const res = await axios.get('https://weisetechdata.onrender.com/api/employees');
       setEmployees(res.data || []);
     } catch (error) {
       console.error('Error fetching employees:', error);
@@ -97,7 +97,7 @@ function CreatePerformanceWarning({ onCancel, onSuccess }) {
       }));
 
       // Create single warning with multiple warning types
-      const response = await axios.post('http://localhost:5000/api/performance-warnings', {
+      const response = await axios.post('https://weisetechdata.onrender.com/api/performance-warnings', {
         employee_id: parseInt(employeeId),
         employee_name: employee_name || `Employee ${employeeId}`,
         overall_notes: overallNotes || '',

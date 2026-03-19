@@ -7,7 +7,7 @@ export default function AllPayrolls() {
 
   const fetchPayrolls = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/payrolls');
+      const res = await axios.get('https://weisetechdata.onrender.com/api/payrolls');
       setPayrolls(res.data);
     } catch (err) {
       console.error('Error fetching payrolls:', err);
