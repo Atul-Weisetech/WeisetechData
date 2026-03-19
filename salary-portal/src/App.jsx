@@ -15,6 +15,7 @@ import { useLocation } from "react-router-dom";
 import EditPayroll from "./pages/EditPayroll";
 import EmployeePayrolls from "./pages/EmployeePayrolls";
 import EmployeeLeaves from "./pages/EmployeeLeaves";
+import EmployeeDetail from "./pages/EmployeeDetail";
 import { NotificationProvider } from "./contexts/NotificationContext";
 // import AddPayrollBreakdown from "./pages/AddPayrollBreakdown";
 
@@ -123,6 +124,15 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/employee/:id"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "hr"]}>
+              <EmployeeDetail />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Fallback route for unmatched URLs */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>

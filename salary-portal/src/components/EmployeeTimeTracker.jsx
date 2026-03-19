@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 
 const EmployeeTimeTracker = ({ onClose, initialTimerState, onTimerUpdate }) => {
@@ -77,14 +77,33 @@ const EmployeeTimeTracker = ({ onClose, initialTimerState, onTimerUpdate }) => {
     setCurrentDate(`${day} ${month}`);
   }, []);
 
-  // Sync with parent state
+  // Always-current ref so cleanup/unmount can read latest values without stale closure
+  const stateRef = useRef({});
+  stateRef.current = { isTracking, elapsedTime, startTime, activityLogs, activityType };
+
+  // Tick the timer while tracking is active
   useEffect(() => {
-    setIsTracking(initialTimerState?.isTracking || false);
-    setElapsedTime(initialTimerState?.elapsedTime || 0);
-    setStartTime(initialTimerState?.startTime || "");
-    setActivityLogs(initialTimerState?.activityLogs || []);
-    setActivityType(initialTimerState?.currentActivityType || "Working time");
-  }, [initialTimerState]);
+    if (!isTracking) return;
+    const iv = setInterval(() => setElapsedTime((p) => p + 1), 1000);
+    return () => clearInterval(iv);
+  }, [isTracking]);
+
+  // On unmount, push final state back to parent so background badge stays accurate
+  useEffect(() => {
+    return () => {
+      const s = stateRef.current;
+      if (s.isTracking && onTimerUpdate) {
+        onTimerUpdate({
+          isTracking: s.isTracking,
+          elapsedTime: s.elapsedTime,
+          startTime: s.startTime,
+          activityLogs: s.activityLogs,
+          currentActivityType: s.activityType,
+        });
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Update parent component with timer state
   const updateParentTimer = (updates) => {

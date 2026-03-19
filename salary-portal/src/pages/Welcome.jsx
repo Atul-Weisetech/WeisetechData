@@ -762,7 +762,12 @@ export default function Welcome() {
                   >
                     <td className="px-2 sm:px-4 py-2">{index + 1}</td>
                     <td className="px-2 sm:px-4 py-2 whitespace-nowrap">
-                      {emp.first_name} {emp.last_name}
+                      <button
+                        onClick={() => navigate(`/employee/${emp.employee_id}`)}
+                        className="text-blue-600 hover:underline font-medium text-left"
+                      >
+                        {emp.first_name} {emp.last_name}
+                      </button>
                     </td>
                     <td className="px-2 sm:px-4 py-2">
                       {["admin", "0", 0].includes(emp.role) ? (

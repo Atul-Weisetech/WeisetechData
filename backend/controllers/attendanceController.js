@@ -190,6 +190,45 @@ exports.getDayReport = async (req, res) => {
   }
 };
 
+// ---------------------- DAILY RECORDS (clock-in + clock-out per day) -------
+exports.getDailyRecords = async (req, res) => {
+  try {
+    const { empl_id } = req.params;
+    const month = parseInt(req.query.month) || new Date().getMonth() + 1;
+    const year  = parseInt(req.query.year)  || new Date().getFullYear();
+
+    const start = Math.floor(new Date(year, month - 1, 1).getTime() / 1000);
+    const end   = Math.floor(new Date(year, month, 1).getTime() / 1000);
+
+    const [rows] = await db.promise().query(
+      `SELECT date, type, working_hours FROM tbl_attendance
+       WHERE empl_id = ? AND date BETWEEN ? AND ?
+       ORDER BY date ASC`,
+      [empl_id, start, end]
+    );
+
+    const dayMap = {};
+    rows.forEach((r) => {
+      const day = new Date(r.date * 1000).toISOString().split("T")[0];
+      if (!dayMap[day]) dayMap[day] = { clock_in: null, clock_out: null, hours: 0 };
+      if (r.type === 0 && !dayMap[day].clock_in) dayMap[day].clock_in = r.date;
+      if (r.type === 1) { dayMap[day].clock_out = r.date; dayMap[day].hours = r.working_hours || 0; }
+    });
+
+    const fmt = (ts) => ts ? new Date(ts * 1000).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true }) : null;
+
+    const records = Object.entries(dayMap)
+      .sort(([a], [b]) => (a < b ? 1 : -1))
+      .map(([date, v]) => ({ date, clock_in: fmt(v.clock_in), clock_out: fmt(v.clock_out), hours: Number((v.hours || 0).toFixed(2)) }));
+
+    const total_hours = Number(records.reduce((s, r) => s + r.hours, 0).toFixed(2));
+    return res.json({ success: true, records, total_hours });
+  } catch (err) {
+    console.log(err);
+    return res.json({ success: false, message: "Server error" });
+  }
+};
+
 // ---------------------- MONTH REPORT ---------------------------
 exports.getMonthReport = async (req, res) => {
   try {

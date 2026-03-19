@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Navbar from "../components/Navbar";
 import LeaveRequest from "../components/LeaveRequest";
+import EmployeeTimeTracker from "../components/EmployeeTimeTracker";
 import WorkFromHomeRequest from "../components/WorkFromHomeRequest";
 import NotificationCenter from "../components/NotificationCenter";
 import axios from "axios";
@@ -34,7 +35,26 @@ function WelcomeEmployee() {
   );
 
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+  const [isTimeTrackerOpen, setIsTimeTrackerOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [timerState, setTimerState] = useState({
+    isTracking: false, elapsedTime: 0, startTime: "",
+    activityLogs: [], currentActivityType: "Working time",
+  });
+
+  const handleTimerUpdate = useCallback((s) => setTimerState(s), []);
+
+  const formatTimerDisplay = (sec) => {
+    const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+    const p = (n) => String(n).padStart(2, "0");
+    return `${p(h)}:${p(m)}:${p(s)}`;
+  };
+
+  useEffect(() => {
+    if (!timerState.isTracking || isTimeTrackerOpen) return;
+    const iv = setInterval(() => setTimerState((prev) => ({ ...prev, elapsedTime: prev.elapsedTime + 1 })), 1000);
+    return () => clearInterval(iv);
+  }, [timerState.isTracking, isTimeTrackerOpen]);
 
   const normalizeDateValue = (value) => {
     if (!value) return null;
@@ -342,12 +362,12 @@ function WelcomeEmployee() {
                 >
                   Apply for Leave
                 </button> */}
-                {/* <button
+                <button
                   onClick={() => setIsTimeTrackerOpen(true)}
                   className="px-5 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold shadow-md transition-colors"
                 >
                   Open Time Tracker
-                </button> */}
+                </button>
               </div>
             </div>
 
@@ -804,6 +824,32 @@ function WelcomeEmployee() {
             </div>
           </div>
         </div>
+      )}
+
+      {isTimeTrackerOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => setIsTimeTrackerOpen(false)}
+        >
+          <div className="relative" onClick={(e) => e.stopPropagation()}>
+            <EmployeeTimeTracker
+              onClose={() => setIsTimeTrackerOpen(false)}
+              initialTimerState={timerState}
+              onTimerUpdate={handleTimerUpdate}
+            />
+          </div>
+        </div>
+      )}
+
+      {timerState.isTracking && !isTimeTrackerOpen && (
+        <button
+          onClick={() => setIsTimeTrackerOpen(true)}
+          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-full shadow-2xl transition-all"
+        >
+          <span className="w-2 h-2 bg-white rounded-full animate-ping" />
+          <span className="font-mono font-bold text-sm">{formatTimerDisplay(timerState.elapsedTime)}</span>
+          <span className="text-sm font-medium">Tracking</span>
+        </button>
       )}
 
       {isLeaveModalOpen && (
