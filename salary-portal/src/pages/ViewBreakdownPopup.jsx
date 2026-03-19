@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import API_BASE from "../config";
 
 export default function ViewBreakdownPopup({
   isOpen,
@@ -25,7 +26,7 @@ export default function ViewBreakdownPopup({
   useEffect(() => {
     if (!isOpen) return;
     axios
-      .get("http://localhost:5000/api/payroll-meta-types")
+      .get(`${API_BASE}/api/payroll-meta-types`)
       .then((res) => setMetaTypes(res.data || []))
       .catch((e) => console.error(e));
   }, [isOpen]);
@@ -44,7 +45,7 @@ export default function ViewBreakdownPopup({
     try {
       setLoading(true);
       await axios.put(
-        `http://localhost:5000/api/payrolls/employeeBreakdown/${editRowId}`,
+        `${API_BASE}/api/payrolls/employeeBreakdown/${editRowId}`,
         {
           amount: Number(form.amount),
           type: form.type,
@@ -64,7 +65,7 @@ export default function ViewBreakdownPopup({
     if (!confirm("Delete this breakdown item?")) return;
     try {
       setLoading(true);
-      await axios.delete(`http://localhost:5000/api/payrolls/employeeBreakdown/${id}`);
+      await axios.delete(`${API_BASE}/api/payrolls/employeeBreakdown/${id}`);
       setToast({ show: true, type: "success", message: "Deleted successfully" });
       onRefresh?.();
     } catch (e) {
@@ -81,7 +82,7 @@ export default function ViewBreakdownPopup({
     }
     try {
       setLoading(true);
-      await axios.post("http://localhost:5000/api/payrolls/employeeBreakdown/breakdown", {
+      await axios.post(`${API_BASE}/api/payrolls/employeeBreakdown/breakdown`, {
         fk_employee_id: Number(employeeId),
         fk_payroll_id: Number(payrollId),
         amount: Number(newItem.amount),

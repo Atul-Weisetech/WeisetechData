@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import API_BASE from "../config";
 
 function ManageLeaveRequests() {
   const [leaveRequests, setLeaveRequests] = useState([]);
@@ -72,7 +73,7 @@ function ManageLeaveRequests() {
         localStorage.getItem('email') ||
         'HR User';
 
-      await axios.put(`http://localhost:5000/api/leave-requests/${requestId}/status`, {
+      await axios.put(`${API_BASE}/api/leave-requests/${requestId}/status`, {
         status,
         reviewed_by: reviewerName,
         reviewed_at: new Date().toISOString()

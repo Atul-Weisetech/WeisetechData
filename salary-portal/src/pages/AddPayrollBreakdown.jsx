@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
+import API_BASE from "../config";
 
 export default function AddPayrollBreakdown({ isOpen, onClose }) {
   if (!isOpen) return null;
@@ -14,15 +15,15 @@ export default function AddPayrollBreakdown({ isOpen, onClose }) {
 
   useEffect(() => {
     if (!isOpen) return;
-    axios.get("http://localhost:5000/api/employees")
+    axios.get(`${API_BASE}/api/employees`)
       .then((res) => setEmployees(res.data || []))
       .catch((err) => console.error(err));
 
-    axios.get("http://localhost:5000/api/payrolls")
+    axios.get(`${API_BASE}/api/payrolls`)
       .then((res) => setPayrolls(res.data || []))
       .catch((err) => console.error(err));
 
-    axios.get("http://localhost:5000/api/payroll-meta-types")
+    axios.get(`${API_BASE}/api/payroll-meta-types`)
       .then((res) => setMetaTypes(res.data || []))
       .catch((err) => console.error(err));
   }, [isOpen]);
@@ -53,7 +54,7 @@ export default function AddPayrollBreakdown({ isOpen, onClose }) {
     onSubmit: async (values) => {
       try {
         await axios.post(
-          "http://localhost:5000/api/payrolls/employeeBreakdown/breakdown",
+          `${API_BASE}/api/payrolls/employeeBreakdown/breakdown`,
           values
         );
         setToast({ show: true, message: "Payroll breakdown added successfully", type: "success" });

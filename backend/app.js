@@ -10,7 +10,14 @@ const notificationRoutes = require('./routes/notification');
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://weisetech-data.vercel.app",
+  ],
+  credentials: true,
+}));
 app.use(bodyParser.json());
 
 app.use('/api', require('./routes/auth'));

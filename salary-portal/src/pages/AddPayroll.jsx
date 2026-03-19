@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import AlertBox from "../components/AlertBox";
 import AddPayrollBreakdown from "./AddPayrollBreakdown"; // adjust path if different
+import API_BASE from "../config";
 
 export default function AddPayroll() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -47,7 +48,7 @@ export default function AddPayroll() {
     window.onpopstate = () => window.history.go(1);
 
     axios
-      .get("http://localhost:5000/api/employees")
+      .get(`${API_BASE}/api/employees`)
       .then((res) => setEmployees(res.data || []))
       .catch((err) => console.error(err));
   }, [navigate, role]);
@@ -108,7 +109,7 @@ export default function AddPayroll() {
     };
 
     try {
-      const res = await axios.post("http://localhost:5000/api/payrolls", data);
+      const res = await axios.post(`${API_BASE}/api/payrolls`, data);
       const createdId = res.data?.id;
       setLastCreatedPayrollId(createdId || null);
       setAlertMessage("Payroll added successfully!");
@@ -142,7 +143,7 @@ export default function AddPayroll() {
     }
 
     try {
-      const empRes = await axios.get("http://localhost:5000/api/employees");
+      const empRes = await axios.get(`${API_BASE}/api/employees`);
       const list = empRes.data || [];
       const payMonth = `${form.pay_month_raw} ${form.pay_year}`;
 
@@ -165,13 +166,13 @@ export default function AddPayroll() {
 
       let created = [];
       try {
-        const res = await axios.post("http://localhost:5000/api/payrolls/bulk", {
+        const res = await axios.post(`${API_BASE}/api/payrolls/bulk`, {
           items: bulkPayload,
         });
         created = Array.isArray(res.data) ? res.data : [];
       } catch {
         const results = await Promise.all(
-          bulkPayload.map((p) => axios.post("http://localhost:5000/api/payrolls", p))
+          bulkPayload.map((p) => axios.post(`${API_BASE}/api/payrolls`, p))
         );
         created = results.map((r) => r.data);
       }
@@ -195,14 +196,14 @@ export default function AddPayroll() {
         if (breakdownItems.length) {
           try {
             await axios.post(
-              "http://localhost:5000/api/payrolls/employeeBreakdown/bulk",
+              `${API_BASE}/api/payrolls/employeeBreakdown/bulk`,
               { items: breakdownItems }
             );
           } catch {
             await Promise.all(
               breakdownItems.map((item) =>
                 axios.post(
-                  "http://localhost:5000/api/payrolls/employeeBreakdown/breakdown",
+                  `${API_BASE}/api/payrolls/employeeBreakdown/breakdown`,
                   item
                 )
               )

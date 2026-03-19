@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import Sidebar from "../components/Sidebar";
+import API_BASE from "../config";
 
 const MONTHS = [
   "January","February","March","April","May","June",
@@ -27,7 +28,7 @@ export default function EmployeeDetail() {
   useEffect(() => {
     setEmpLoading(true);
     axios
-      .get(`http://localhost:5000/api/employees/${id}`)
+      .get(`${API_BASE}/api/employees/${id}`)
       .then((res) => setEmployee(Array.isArray(res.data) ? res.data[0] : res.data))
       .catch(() => setEmployee(null))
       .finally(() => setEmpLoading(false));
@@ -37,7 +38,7 @@ export default function EmployeeDetail() {
     setAttLoading(true);
     setAttError("");
     axios
-      .get(`http://localhost:5000/api/attendance/records/${id}?month=${attMonth.month}&year=${attMonth.year}`)
+      .get(`${API_BASE}/api/attendance/records/${id}?month=${attMonth.month}&year=${attMonth.year}`)
       .then((res) => {
         if (res.data?.success === false) {
           setAttError(res.data.message || "Server returned an error");

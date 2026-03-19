@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import Sidebar from "../components/Sidebar";
 import DownloadPayrollPDF from "../components/DownloadPayrollPDF";
+import API_BASE from "../config";
 
 export default function EmployeePayrolls() {
   const navigate = useNavigate();
@@ -20,19 +21,19 @@ export default function EmployeePayrolls() {
       setError("");
       try {
         // Fetch payrolls
-        const payrollRes = await axios.get(`http://localhost:5000/api/payrolls/employee/${id}`);
+        const payrollRes = await axios.get(`${API_BASE}/api/payrolls/employee/${id}`);
         console.log('Payrolls data:', payrollRes.data);
         setPayrolls(payrollRes.data || []);
         
         // Fetch employee data
-        const employeeRes = await axios.get(`http://localhost:5000/api/employees/${id}`);
+        const employeeRes = await axios.get(`${API_BASE}/api/employees/${id}`);
         console.log('Employee data:', employeeRes.data);
         setEmployeeData(employeeRes.data);
         
         // Fetch breakdown data for each payroll - FIXED: Use the correct endpoint
         if (payrollRes.data && payrollRes.data.length > 0) {
           const breakdownPromises = payrollRes.data.map(payroll => 
-            axios.get(`http://localhost:5000/api/payrolls/${payroll.id}/breakdown`)
+            axios.get(`${API_BASE}/api/payrolls/${payroll.id}/breakdown`)
               .then(res => {
                 console.log(`Breakdown for payroll ${payroll.id}:`, res.data);
                 return { payrollId: payroll.id, data: res.data };

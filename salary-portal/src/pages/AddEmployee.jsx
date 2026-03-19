@@ -4,6 +4,7 @@ import * as Yup from "yup";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import AlertBox from "../components/AlertBox";
+import API_BASE from "../config";
 
 export default function AddEmployee() {
   const navigate = useNavigate();
@@ -51,7 +52,7 @@ export default function AddEmployee() {
         );
         const payload = { ...values, joining_date: unixTimestamp };
 
-        await axios.post("http://localhost:5000/api/employees", payload);
+        await axios.post(`${API_BASE}/api/employees`, payload);
         setAlertMessage("Employee added successfully");
         setShowAlert(true);
 

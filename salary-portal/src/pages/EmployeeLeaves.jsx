@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import Sidebar from "../components/Sidebar";
+import API_BASE from "../config";
 
 export default function EmployeeLeaves() {
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ export default function EmployeeLeaves() {
       try {
         // Fetch leave requests for employee - using same pattern as WelcomeEmployee.jsx
         const leaveRes = await axios.get(
-          `http://localhost:5000/api/leave-requests/employee/${id}`
+          `${API_BASE}/api/leave-requests/employee/${id}`
         );
         
         console.log("Raw Leave API Response:", JSON.stringify(leaveRes.data, null, 2));
@@ -54,7 +55,7 @@ export default function EmployeeLeaves() {
 
         // Fetch employee data
         const employeeRes = await axios.get(
-          `http://localhost:5000/api/employees/${id}`
+          `${API_BASE}/api/employees/${id}`
         );
         
         console.log("Raw Employee API Response:", JSON.stringify(employeeRes.data, null, 2));
@@ -94,7 +95,7 @@ export default function EmployeeLeaves() {
         if (e?.config?.url?.includes('/leave-requests')) {
           try {
             const employeeRes = await axios.get(
-              `http://localhost:5000/api/employees/${id}`
+              `${API_BASE}/api/employees/${id}`
             );
             const empData = Array.isArray(employeeRes.data)
               ? employeeRes.data[0]

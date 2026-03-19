@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import API_BASE from "../config";
 
 function ManageWorkFromHome() {
   const [requests, setRequests] = useState([]);
@@ -61,7 +62,7 @@ function ManageWorkFromHome() {
     try {
       const status = (newStatus || '').toLowerCase() === 'rejected' ? 'declined' : (newStatus || '').toLowerCase();
       const reviewerName = localStorage.getItem('name') || localStorage.getItem('email') || 'HR User';
-      await axios.put(`http://localhost:5000/api/work-from-home/${requestId}/status`, {
+      await axios.put(`${API_BASE}/api/work-from-home/${requestId}/status`, {
         status,
         reviewed_by: reviewerName,
         reviewed_at: new Date().toISOString()

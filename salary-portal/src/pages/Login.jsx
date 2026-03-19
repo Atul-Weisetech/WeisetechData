@@ -7,6 +7,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import logo from "../assets/weisetechLogo.png";
 import { ClimbingBoxLoader } from "react-spinners";
 import AlertBox from "../components/AlertBox";
+import API_BASE from "../config";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ export default function Login() {
     onSubmit: async (values, { setFieldError }) => {
       setLoading(true);
       try {
-        const res = await axios.post("http://localhost:5000/api/login", values);
+        const res = await axios.post(`${API_BASE}/api/login`, values);
         console.log(res.data);
         localStorage.setItem("email", res.data.user.email_address);
         localStorage.setItem("role", res.data.role);

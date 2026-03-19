@@ -4,6 +4,7 @@ import axios from "axios";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import AlertBox from "../components/AlertBox";
+import API_BASE from "../config";
 
 export default function EditEmployee() {
   const { id } = useParams();
@@ -47,7 +48,7 @@ export default function EditEmployee() {
         };
 
         await axios.put(
-          `http://localhost:5000/api/employees/${id}`,
+          `${API_BASE}/api/employees/${id}`,
           updatedData
         );
 
@@ -76,7 +77,7 @@ export default function EditEmployee() {
 
   useEffect(() => {
     axios
-      .get(`http://localhost:5000/api/employees`)
+      .get(`${API_BASE}/api/employees`)
       .then((res) => {
         const emp = res.data.find((e) => e.employee_id === parseInt(id));
         if (emp) {

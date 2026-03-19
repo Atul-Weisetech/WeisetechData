@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import API_BASE from "../config";
 
 export default function AllPayrolls() {
   const [payrolls, setPayrolls] = useState([]);
@@ -20,7 +21,7 @@ export default function AllPayrolls() {
 
   const publishPayroll = async (id) => {
     try {
-      await axios.put(`http://localhost:5000/api/payroll/publish/${id}`);
+      await axios.put(`${API_BASE}/api/payroll/publish/${id}`);
       setToast({ show: true, message: 'Payroll published', type: 'success' });
       fetchPayrolls();
     } catch (err) {

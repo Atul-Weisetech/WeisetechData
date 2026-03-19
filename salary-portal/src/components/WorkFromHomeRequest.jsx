@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import API_BASE from "../config";
 
 function WorkFromHomeRequest({ onClose, embedded = false, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -77,7 +78,7 @@ function WorkFromHomeRequest({ onClose, embedded = false, onSuccess }) {
       };
 
       const res = await axios.post(
-        "http://localhost:5000/api/work-from-home",
+        `${API_BASE}/api/work-from-home`,
         payload
       );
       if (res.status === 201 || res.status === 200) {
@@ -100,7 +101,7 @@ function WorkFromHomeRequest({ onClose, embedded = false, onSuccess }) {
         msg = `Server error (${err.response.status}). Check backend console for details.`;
       }
       if (!msg && err?.message && (err.message.includes("Network") || err.code === "ERR_NETWORK")) {
-        msg = "Cannot reach server. Is the backend running on http://localhost:5000?";
+        msg = "Cannot reach server. Is the backend running on ${API_BASE}?";
       }
       setError(msg || "Failed to submit work from home request");
     } finally {

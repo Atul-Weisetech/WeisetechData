@@ -8,6 +8,7 @@ import axios from "axios";
 import { ClimbingBoxLoader } from "react-spinners";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import API_BASE from "../config";
 
 function WelcomeEmployee() {
   const [payrolls, setPayrolls] = useState([]);
@@ -83,12 +84,12 @@ function WelcomeEmployee() {
       if (showLoader) setLoading(true);
       try {
         const payrollRes = await axios.get(
-          `http://localhost:5000/api/payrolls/employee/${employeeId}`
+          `${API_BASE}/api/payrolls/employee/${employeeId}`
         );
         setPayrolls(payrollRes.data || []);
 
         const employeeRes = await axios.get(
-          `http://localhost:5000/api/employees/${employeeId}`
+          `${API_BASE}/api/employees/${employeeId}`
         );
         const employeeData = Array.isArray(employeeRes.data)
           ? employeeRes.data[0]
@@ -101,7 +102,7 @@ function WelcomeEmployee() {
           setJoiningDate(joinDate);
 
           const leaveRes = await axios.get(
-            `http://localhost:5000/api/leave-requests/employee/${employeeId}`
+            `${API_BASE}/api/leave-requests/employee/${employeeId}`
           );
           const leaveRequests = Array.isArray(leaveRes.data)
             ? leaveRes.data
@@ -144,7 +145,7 @@ function WelcomeEmployee() {
           setRemainingLeaves(Math.max(0, totalLeaves - approvedLeaves));
 
           const wfhRes = await axios.get(
-            `http://localhost:5000/api/work-from-home/employee/${employeeId}`
+            `${API_BASE}/api/work-from-home/employee/${employeeId}`
           );
           const wfhList = Array.isArray(wfhRes.data) ? wfhRes.data : wfhRes.data?.data || [];
           setWfhRequests(wfhList);
@@ -170,8 +171,8 @@ function WelcomeEmployee() {
     const fetchReviewedCount = async () => {
       try {
         const [leaveRes, wfhRes] = await Promise.all([
-          axios.get(`http://localhost:5000/api/leave-requests/employee/${employeeId}`),
-          axios.get(`http://localhost:5000/api/work-from-home/employee/${employeeId}`),
+          axios.get(`${API_BASE}/api/leave-requests/employee/${employeeId}`),
+          axios.get(`${API_BASE}/api/work-from-home/employee/${employeeId}`),
         ]);
         const leaveItems = leaveRes.data?.data ?? (Array.isArray(leaveRes.data) ? leaveRes.data : []);
         const wfhItems = wfhRes.data?.data ?? (Array.isArray(wfhRes.data) ? wfhRes.data : []);
@@ -188,7 +189,7 @@ function WelcomeEmployee() {
 
     const fetchUnreadAppNotifications = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/notifications/employee/${employeeId}/unread-count`);
+        const res = await axios.get(`${API_BASE}/api/notifications/employee/${employeeId}/unread-count`);
         setUnreadAppNotificationsCount(res.data?.count ?? 0);
       } catch (e) {
         // ignore
@@ -239,7 +240,7 @@ function WelcomeEmployee() {
   const handleDownload = async (payslipData) => {
     try {
       const breakdownRes = await axios.get(
-        "http://localhost:5000/api/payrolls/employee/breakdown",
+        `${API_BASE}/api/payrolls/employee/breakdown`,
         { params: { payrollId: payslipData.id } }
       );
       const breakdown = Array.isArray(breakdownRes.data)

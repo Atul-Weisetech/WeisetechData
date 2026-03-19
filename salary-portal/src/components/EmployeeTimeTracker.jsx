@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import API_BASE from "../config";
 
 const EmployeeTimeTracker = ({ onClose, initialTimerState, onTimerUpdate }) => {
   // Initialize state with props or defaults
@@ -186,7 +187,7 @@ const EmployeeTimeTracker = ({ onClose, initialTimerState, onTimerUpdate }) => {
         }
       }
       const res = await axios.post(
-        "http://localhost:5000/api/attendance/clock-in",
+        `${API_BASE}/api/attendance/clock-in`,
         {
           empl_id,
           lat: latVal,
@@ -216,7 +217,7 @@ const EmployeeTimeTracker = ({ onClose, initialTimerState, onTimerUpdate }) => {
         }
       }
       const res = await axios.post(
-        "http://localhost:5000/api/attendance/clock-out",
+        `${API_BASE}/api/attendance/clock-out`,
         {
           empl_id,
           lat: latVal,

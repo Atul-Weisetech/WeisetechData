@@ -4,6 +4,7 @@ import axios from "axios";
 import Sidebar from "../components/Sidebar";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
+import API_BASE from "../config";
 
 export default function EditPayroll() {
   const { id } = useParams();
@@ -30,12 +31,12 @@ export default function EditPayroll() {
 
   useEffect(() => {
     axios
-      .get("http://localhost:5000/api/employees")
+      .get(`${API_BASE}/api/employees`)
       .then((res) => setEmployees(res.data))
       .catch((err) => console.error("Failed to load employees", err));
 
     axios
-      .get(`http://localhost:5000/api/payrolls/${id}`)
+      .get(`${API_BASE}/api/payrolls/${id}`)
       .then((res) => {
         const data = res.data;
         const formattedDate = formatDateLocal(data.payroll_date);
@@ -83,7 +84,7 @@ export default function EditPayroll() {
       pay_month: `${values.pay_month} ${values.pay_year}`, // ✅ combine
     };
     try {
-      await axios.put(`http://localhost:5000/api/payrolls/${id}`, payload);
+      await axios.put(`${API_BASE}/api/payrolls/${id}`, payload);
       setToast({
         show: true,
         message: "Payroll updated successfully!",

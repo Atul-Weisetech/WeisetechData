@@ -4,6 +4,7 @@ import * as Yup from "yup";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import API_BASE from "../config";
 
 export default function AddHR() {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ export default function AddHR() {
     }),
     onSubmit: async (values) => {
       try {
-        await axios.post("http://localhost:5000/api/add-hr", values);
+        await axios.post(`${API_BASE}/api/add-hr`, values);
         alert("HR added successfully");
         navigate("/welcome");
       } catch (err) {

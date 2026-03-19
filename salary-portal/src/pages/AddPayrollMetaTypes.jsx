@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import API_BASE from "../config";
 
 export default function AddPayrollMetaTypes({ isOpen, onClose }) {
   const [typeName, setTypeName] = useState("");
@@ -9,7 +10,7 @@ export default function AddPayrollMetaTypes({ isOpen, onClose }) {
   useEffect(() => {
     if (isOpen) {
       axios
-        .get("http://localhost:5000/api/payroll-meta-types")
+        .get(`${API_BASE}/api/payroll-meta-types`)
         .then((res) => setMetaTypes(res.data))
         .catch((err) => console.error(err));
     }
@@ -20,11 +21,11 @@ export default function AddPayrollMetaTypes({ isOpen, onClose }) {
     if (!typeName) return;
 
     try {
-      await axios.post("http://localhost:5000/api/payroll-meta-types", {
+      await axios.post(`${API_BASE}/api/payroll-meta-types`, {
         type_name: typeName,
       });
       setTypeName("");
-      const res = await axios.get("http://localhost:5000/api/payroll-meta-types");
+      const res = await axios.get(`${API_BASE}/api/payroll-meta-types`);
       setMetaTypes(res.data);
       setToast({ show: true, message: "Meta type added successfully!", type: "success" });
     } catch (err) {

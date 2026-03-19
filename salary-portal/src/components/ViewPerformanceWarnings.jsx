@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNotification } from '../contexts/NotificationContext';
+import API_BASE from "../config";
 
 function ViewPerformanceWarnings({ onBack }) {
   const { showSuccess, showError, showConfirm } = useNotification();
@@ -61,7 +62,7 @@ function ViewPerformanceWarnings({ onBack }) {
       'Are you sure you want to delete this warning?',
       async () => {
         try {
-          await axios.delete(`http://localhost:5000/api/performance-warnings/${id}`);
+          await axios.delete(`${API_BASE}/api/performance-warnings/${id}`);
           showSuccess('Warning deleted successfully');
           fetchWarnings();
         } catch (error) {
@@ -78,7 +79,7 @@ function ViewPerformanceWarnings({ onBack }) {
   const handleEdit = async (warning) => {
     try {
       // Fetch full details with descriptions for editing
-      const res = await axios.get(`http://localhost:5000/api/performance-warnings/${warning.id}`);
+      const res = await axios.get(`${API_BASE}/api/performance-warnings/${warning.id}`);
       const fullWarning = res.data?.data;
       
       setEditingId(warning.id);
@@ -105,7 +106,7 @@ function ViewPerformanceWarnings({ onBack }) {
 
   const handleSaveEdit = async (id) => {
     try {
-      await axios.put(`http://localhost:5000/api/performance-warnings/${id}`, editForm);
+      await axios.put(`${API_BASE}/api/performance-warnings/${id}`, editForm);
       showSuccess('Warning updated successfully');
       setEditingId(null);
       fetchWarnings();
@@ -146,7 +147,7 @@ function ViewPerformanceWarnings({ onBack }) {
     
     try {
       setLoadingDetail(true);
-      const res = await axios.get(`http://localhost:5000/api/performance-warnings/${warning.id}`);
+      const res = await axios.get(`${API_BASE}/api/performance-warnings/${warning.id}`);
       const data = res.data?.data || res.data || null;
       console.log('Fetched warning details:', data); // Debug log
       setDetailWarning(data);

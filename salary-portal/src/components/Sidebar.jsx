@@ -2,6 +2,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import weisetechLogo from "../assets/weisetechLogo.png";
+import API_BASE from "../config";
 
 export default function Sidebar({ onSelect, className = "" }) {
   const navigate = useNavigate();
@@ -27,18 +28,18 @@ export default function Sidebar({ onSelect, className = "" }) {
       try {
         if (role === "admin" || role === "hr") {
           const res = await axios.get(
-            "http://localhost:5000/api/leave-requests/pending-count"
+            `${API_BASE}/api/leave-requests/pending-count`
           );
           const count = res.data?.data?.pending_leave_requests ?? 0;
           setPendingCount(count);
           const wfhRes = await axios.get(
-            "http://localhost:5000/api/work-from-home/pending-count"
+            `${API_BASE}/api/work-from-home/pending-count`
           );
           setPendingWfhCount(wfhRes.data?.data?.pending_work_from_home_requests ?? 0);
         }
         if (employeeId) {
           const resEmp = await axios.get(
-            `http://localhost:5000/api/leave-requests/employee/${employeeId}`
+            `${API_BASE}/api/leave-requests/employee/${employeeId}`
           );
           const items = resEmp.data?.data || [];
           const reviewed = items.filter(

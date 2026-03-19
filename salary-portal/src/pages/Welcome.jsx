@@ -10,6 +10,7 @@ import ManageWorkFromHome from "../components/ManageWorkFromHome";
 import PerformanceWarning from "../components/PerformanceWarning";
 import DownloadPayrollPDF from "../components/DownloadPayrollPDF";
 import CustomConfirmDialog from "../components/CustomConfirmDialog";
+import API_BASE from "../config";
 
 export default function Welcome() {
   const [toast, setToast] = useState({ show: false, message: "", type: "" });
@@ -65,7 +66,7 @@ export default function Welcome() {
   useEffect(() => {
     if (view === "previous") {
       axios
-        .get("http://localhost:5000/api/payrolls/published")
+        .get(`${API_BASE}/api/payrolls/published`)
         .then((res) => setPreviouspayrollsList(res.data || []))
         .catch(() => setPreviouspayrollsList([]));
     }
@@ -73,7 +74,7 @@ export default function Welcome() {
 
   const fetchEmployees = () => {
     axios
-      .get("http://localhost:5000/api/employees")
+      .get(`${API_BASE}/api/employees`)
       .then((res) => {
         console.log("Employees fetched:", res.data);
         setEmployees(res.data || []);
@@ -93,7 +94,7 @@ export default function Welcome() {
 
   const fetchPayrolls = () => {
     axios
-      .get("http://localhost:5000/api/payrolls")
+      .get(`${API_BASE}/api/payrolls`)
       .then((res) => {
         console.log("Payrolls fetched:", res.data);
         setPayrolls(res.data || []);
@@ -130,7 +131,7 @@ export default function Welcome() {
   const handleDeactivateConfirmed = async () => {
     try {
       await axios.patch(
-        `http://localhost:5000/api/employees/${selectedId}/deactivate`
+        `${API_BASE}/api/employees/${selectedId}/deactivate`
       );
       fetchEmployees();
       setShowModal(false);
@@ -149,7 +150,7 @@ export default function Welcome() {
   };
   const handleDeletePayroll = async () => {
     try {
-      await axios.delete(`http://localhost:5000/api/payrolls/${selectedId}`);
+      await axios.delete(`${API_BASE}/api/payrolls/${selectedId}`);
       fetchPayrolls();
       setShowModal(false);
     } catch (err) {
@@ -160,7 +161,7 @@ export default function Welcome() {
   const publishPayroll = async (id) => {
     try {
       const res = await axios.post(
-        `http://localhost:5000/api/payrolls/publish/${id}`
+        `${API_BASE}/api/payrolls/publish/${id}`
       );
       setToast({
         show: true,
@@ -223,7 +224,7 @@ export default function Welcome() {
     try {
       for (const rec of unpublished) {
         await axios.post(
-          `http://localhost:5000/api/payrolls/publish/${rec.id}`
+          `${API_BASE}/api/payrolls/publish/${rec.id}`
         );
       }
       alert(
@@ -241,7 +242,7 @@ export default function Welcome() {
     const pyrId = payroll.id;
     setSelectedPayroll(payroll);
     axios
-      .get("http://localhost:5000/api/payrolls/employee/breakdown", {
+      .get(`${API_BASE}/api/payrolls/employee/breakdown`, {
         params: { payrollId: pyrId },
       })
       .then((res) => {
@@ -258,7 +259,7 @@ export default function Welcome() {
     if (!selectedPayroll?.id) return;
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/payrolls/employee/breakdown",
+        `${API_BASE}/api/payrolls/employee/breakdown`,
         { params: { payrollId: selectedPayroll.id } }
       );
       setBreakdownData(res.data);
@@ -306,7 +307,7 @@ export default function Welcome() {
       return;
     }
     try {
-      const empRes = await axios.get("http://localhost:5000/api/employees");
+      const empRes = await axios.get(`${API_BASE}/api/employees`);
       const list = empRes.data || [];
       const payMonth = `${monthRaw} ${new Date(date).getFullYear()}`;
 
@@ -333,14 +334,14 @@ export default function Welcome() {
       let created = [];
       try {
         const res = await axios.post(
-          "http://localhost:5000/api/payrolls/bulk",
+          `${API_BASE}/api/payrolls/bulk`,
           { items: bulkPayload }
         );
         created = Array.isArray(res.data) ? res.data : [];
       } catch {
         const results = await Promise.all(
           bulkPayload.map((p) =>
-            axios.post("http://localhost:5000/api/payrolls", p)
+            axios.post(`${API_BASE}/api/payrolls`, p)
           )
         );
         created = results.map((r) => r.data);
