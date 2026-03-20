@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 import API_BASE from "../config";
 
 function ManageWorkFromHome() {
@@ -25,7 +26,7 @@ function ManageWorkFromHome() {
       setRequests(res.data?.data || res.data || []);
     } catch (error) {
       console.error('Error fetching work from home requests:', error);
-      alert('Failed to fetch work from home requests: ' + (error.response?.data?.error || error.message));
+      toast.error('Failed to fetch work from home requests: ' + (error.response?.data?.error || error.message));
       setRequests([]);
     } finally {
       setLoading(false);
@@ -75,7 +76,7 @@ function ManageWorkFromHome() {
       setEditingRequest(null);
     } catch (error) {
       console.error('Error updating work from home status:', error);
-      alert('Failed to update status');
+      toast.error('Failed to update status');
     }
   };
 

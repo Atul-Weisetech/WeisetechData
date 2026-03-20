@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
-import AlertBox from "../components/AlertBox";
+import { toast } from "react-toastify";
 import AddPayrollBreakdown from "./AddPayrollBreakdown"; // adjust path if different
 import API_BASE from "../config";
 
@@ -18,8 +18,6 @@ export default function AddPayroll() {
     pay_year: "",
     mode_of_payment: "",
   });
-  const [showAlert, setShowAlert] = useState(false);
-  const [alertMessage, setAlertMessage] = useState("");
   const [openBreakdown, setOpenBreakdown] = useState(false);
   const [lastCreatedPayrollId, setLastCreatedPayrollId] = useState(null);
   const navigate = useNavigate();
@@ -94,8 +92,7 @@ export default function AddPayroll() {
       !form.pay_month ||
       !form.mode_of_payment
     ) {
-      setAlertMessage("Please fill all fields with valid values");
-      setShowAlert(true);
+      toast.warning("Please fill all fields with valid values");
       return;
     }
 
@@ -112,18 +109,11 @@ export default function AddPayroll() {
       const res = await axios.post(`${API_BASE}/api/payrolls`, data);
       const createdId = res.data?.id;
       setLastCreatedPayrollId(createdId || null);
-      setAlertMessage("Payroll added successfully!");
-      setShowAlert(true);
-
-      // Open breakdown modal for the created payroll so breakdown can be added immediately
-      setTimeout(() => {
-        setShowAlert(false);
-        setOpenBreakdown(true);
-      }, 600);
+      toast.success("Payroll added successfully!");
+      setTimeout(() => setOpenBreakdown(true), 600);
     } catch (err) {
       console.error(err.response?.data || err);
-      setAlertMessage("Failed to add payroll");
-      setShowAlert(true);
+      toast.error("Failed to add payroll");
     }
   };
 
@@ -137,8 +127,7 @@ export default function AddPayroll() {
 
   const handleGenerateAll = async () => {
     if (!form.pay_month_raw || !form.pay_year || !form.payroll_date || !form.mode_of_payment) {
-      setAlertMessage("Select month, year, date, and payment mode for bulk generation");
-      setShowAlert(true);
+      toast.warning("Select month, year, date, and payment mode for bulk generation");
       return;
     }
 
@@ -159,8 +148,7 @@ export default function AddPayroll() {
         }));
 
       if (!bulkPayload.length) {
-        setAlertMessage("No employees with valid salary found");
-        setShowAlert(true);
+        toast.warning("No employees with valid salary found");
         return;
       }
 
@@ -177,8 +165,7 @@ export default function AddPayroll() {
         created = results.map((r) => r.data);
       }
 
-      setAlertMessage(`Generated ${created.length} payrolls successfully`);
-      setShowAlert(true);
+      toast.success(`Generated ${created.length} payrolls successfully`);
 
       // Optional auto breakdown creation
       try {
@@ -215,8 +202,7 @@ export default function AddPayroll() {
       }
     } catch (e) {
       console.error(e);
-      setAlertMessage("Bulk generation failed");
-      setShowAlert(true);
+      toast.error("Bulk generation failed");
     }
   };
 
@@ -283,10 +269,6 @@ export default function AddPayroll() {
 
         <div className="bg-white w-full max-w-2xl mx-auto rounded-lg shadow p-6">
           <h2 className="text-lg sm:text-xl font-semibold mb-4 text-blue-600">Generate Payroll</h2>
-
-          {showAlert && (
-            <AlertBox message={alertMessage} onClose={() => setShowAlert(false)} />
-          )}
 
           <label className="block mb-1 font-medium">Select Employee</label>
           <select
@@ -364,8 +346,7 @@ export default function AddPayroll() {
             <button
               onClick={() => {
                 if (!selectedId || !form.pay_month) {
-                  setAlertMessage("Select employee and month/year first");
-                  setShowAlert(true);
+                  toast.warning("Select employee and month/year first");
                   return;
                 }
                 setOpenBreakdown(true);

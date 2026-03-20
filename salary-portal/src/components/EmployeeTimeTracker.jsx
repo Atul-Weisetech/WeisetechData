@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import { toast } from "react-toastify";
 import API_BASE from "../config";
 
 const EmployeeTimeTracker = ({ onClose, initialTimerState, onTimerUpdate }) => {
@@ -197,7 +198,7 @@ const EmployeeTimeTracker = ({ onClose, initialTimerState, onTimerUpdate }) => {
       return res?.data;
     } catch (error) {
       console.error("Clock-in failed:", error);
-      alert(error?.response?.data?.message || "Failed to record clock-in");
+      toast.error(error?.response?.data?.message || "Failed to record clock-in");
     }
   };
 
@@ -227,7 +228,7 @@ const EmployeeTimeTracker = ({ onClose, initialTimerState, onTimerUpdate }) => {
       return res?.data;
     } catch (error) {
       console.error("Clock-out failed:", error);
-      alert(error?.response?.data?.message || "Failed to record clock-out");
+      toast.error(error?.response?.data?.message || "Failed to record clock-out");
       return null;
     }
   };
@@ -318,7 +319,7 @@ const EmployeeTimeTracker = ({ onClose, initialTimerState, onTimerUpdate }) => {
     };
 
     console.log("Final Time Tracking Data:", finalData);
-    alert(
+    toast.success(
       workedHours != null
         ? `Time tracking saved. Worked hours: ${workedHours}h`
         : "Time tracking completed and saved!"

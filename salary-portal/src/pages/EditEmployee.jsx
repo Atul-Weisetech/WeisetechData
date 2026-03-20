@@ -3,14 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import AlertBox from "../components/AlertBox";
+import { toast } from "react-toastify";
 import API_BASE from "../config";
 
 export default function EditEmployee() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [showAlert, setShowAlert] = useState(false);
-  const [alertMessage, setAlertMessage] = useState("");
 
   const formik = useFormik({
     initialValues: {
@@ -52,25 +50,15 @@ export default function EditEmployee() {
           updatedData
         );
 
-        setAlertMessage("Employee updated successfully");
-        setShowAlert(true);
-
-        // Redirect after short delay
-        setTimeout(() => {
-          setShowAlert(false);
-          navigate("/welcome");
-        }, 3500);
+        toast.success("Employee updated successfully");
+        setTimeout(() => navigate("/welcome"), 2000);
       } catch (err) {
         console.error("Update error:", err);
-        if (
-          err.response?.data?.error ===
-          "Email already in use by another employee"
-        ) {
-          setAlertMessage("This email is already assigned to another employee.");
+        if (err.response?.data?.error === "Email already in use by another employee") {
+          toast.error("This email is already assigned to another employee.");
         } else {
-          setAlertMessage("Failed to update employee");
+          toast.error("Failed to update employee");
         }
-        setShowAlert(true);
       }
     },
   });
@@ -102,8 +90,7 @@ export default function EditEmployee() {
             joining_date: formattedDate || "",
           });
         } else {
-          setAlertMessage("Employee not found");
-          setShowAlert(true);
+          toast.error("Employee not found");
         }
       })
       .catch((err) => console.error(err));
@@ -121,10 +108,6 @@ export default function EditEmployee() {
           Back
         </button>
       </div>
-
-      {showAlert && (
-        <AlertBox message={alertMessage} onClose={() => setShowAlert(false)} />
-      )}
 
       <form onSubmit={formik.handleSubmit}>
         {Object.keys(formik.values).map((field) => (

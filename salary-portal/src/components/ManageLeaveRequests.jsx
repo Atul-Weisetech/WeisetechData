@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 import API_BASE from "../config";
 
 function ManageLeaveRequests() {
@@ -26,7 +27,7 @@ function ManageLeaveRequests() {
       setLeaveRequests(res.data?.data || res.data || []);
     } catch (error) {
       console.error('Error fetching leave requests:', error);
-      alert('Failed to fetch leave requests: ' + (error.response?.data?.error || error.message));
+      toast.error('Failed to fetch leave requests: ' + (error.response?.data?.error || error.message));
       setLeaveRequests([]);
     } finally {
       setLoading(false);
@@ -104,7 +105,7 @@ function ManageLeaveRequests() {
       setEditingRequest(null);
     } catch (error) {
       console.error('Error updating leave request:', error);
-      alert('Failed to update leave request status');
+      toast.error('Failed to update leave request status');
     }
   };
 

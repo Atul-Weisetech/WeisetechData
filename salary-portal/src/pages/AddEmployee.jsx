@@ -3,13 +3,11 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import AlertBox from "../components/AlertBox";
+import { toast } from "react-toastify";
 import API_BASE from "../config";
 
 export default function AddEmployee() {
   const navigate = useNavigate();
-  const [showAlert, setShowAlert] = useState(false);
-  const [alertMessage, setAlertMessage] = useState("");
 
   const formik = useFormik({
     initialValues: {
@@ -53,17 +51,10 @@ export default function AddEmployee() {
         const payload = { ...values, joining_date: unixTimestamp };
 
         await axios.post(`${API_BASE}/api/employees`, payload);
-        setAlertMessage("Employee added successfully");
-        setShowAlert(true);
-
-        // Redirect after short delay
-        setTimeout(() => {
-          setShowAlert(false);
-          navigate("/welcome");
-        }, 5500);
+        toast.success("Employee added successfully");
+        setTimeout(() => navigate("/welcome"), 2000);
       } catch (err) {
-        setAlertMessage(err.response?.data?.error || "Failed to add employee");
-        setShowAlert(true);
+        toast.error(err.response?.data?.error || "Failed to add employee");
       }
     },
   });
@@ -73,10 +64,6 @@ export default function AddEmployee() {
       <h2 className="text-xl font-semibold mb-4 text-blue-700 text-center">
         Add Employee
       </h2>
-
-      {showAlert && (
-        <AlertBox message={alertMessage} onClose={() => setShowAlert(false)} />
-      )}
 
       <form onSubmit={formik.handleSubmit}>
         {Object.keys(formik.initialValues).map((field) => (

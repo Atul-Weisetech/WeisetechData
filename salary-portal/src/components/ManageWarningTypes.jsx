@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 
 function ManageWarningTypes({ onClose }) {const defaultTypes = [    'Attendance Issue',
     'Performance Issue',
@@ -39,17 +40,17 @@ function ManageWarningTypes({ onClose }) {const defaultTypes = [    'Attendance 
       setWarningTypes(types);
     } catch (error) {
       console.error('Error saving warning types:', error);
-      alert('Failed to save warning types');
+      toast.error('Failed to save warning types');
     }
   };
 
   const handleAdd = () => {
     if (!newType.trim()) {
-      alert('Please enter a warning type');
+        toast.warning('Please enter a warning type');
       return;
     }
     if (warningTypes.includes(newType.trim())) {
-      alert('This warning type already exists');
+      toast.warning('This warning type already exists');
       return;
     }
     const updated = [...warningTypes, newType.trim()];
@@ -64,11 +65,11 @@ function ManageWarningTypes({ onClose }) {const defaultTypes = [    'Attendance 
 
   const handleSaveEdit = () => {
     if (!editValue.trim()) {
-      alert('Warning type cannot be empty');
+      toast.warning('Warning type cannot be empty');
       return;
     }
     if (warningTypes.includes(editValue.trim()) && warningTypes.indexOf(editValue.trim()) !== editingIndex) {
-      alert('This warning type already exists');
+      toast.warning('This warning type already exists');
       return;
     }
     const updated = [...warningTypes];

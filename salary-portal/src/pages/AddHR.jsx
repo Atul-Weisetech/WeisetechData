@@ -4,6 +4,7 @@ import * as Yup from "yup";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { toast } from "react-toastify";
 import API_BASE from "../config";
 
 export default function AddHR() {
@@ -28,10 +29,10 @@ export default function AddHR() {
     onSubmit: async (values) => {
       try {
         await axios.post(`${API_BASE}/api/add-hr`, values);
-        alert("HR added successfully");
-        navigate("/welcome");
+        toast.success("HR added successfully");
+        setTimeout(() => navigate("/welcome"), 2000);
       } catch (err) {
-        alert(err.response?.data?.error || "Failed to add HR");
+        toast.error(err.response?.data?.error || "Failed to add HR");
       }
     },
   });

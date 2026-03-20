@@ -4,6 +4,7 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
 import Login from "./pages/Login";
 import Welcome from "./pages/Welcome";
 import AddEmployee from "./pages/AddEmployee";
@@ -137,6 +138,7 @@ function App() {
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>
+    <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick pauseOnHover draggable />
     </NotificationProvider>
   );
 }

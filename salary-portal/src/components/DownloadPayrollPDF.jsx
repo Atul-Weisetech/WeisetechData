@@ -1,6 +1,7 @@
 import React from 'react';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import { toast } from 'react-toastify';
 
 const DownloadPayrollPDF = ({
   payrollData,
@@ -367,7 +368,7 @@ const DownloadPayrollPDF = ({
 
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF. Please try again.');
+      toast.error('Failed to generate PDF. Please try again.');
     }
   };
 
