@@ -1,8 +1,15 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import weisetechLogo from "../assets/weisetechLogo.png";
 import API_BASE from "../config";
+import {
+  FaUsers,
+  FaMoneyBillWave,
+  FaHistory,
+  FaCalendarAlt,
+  FaHome,
+  FaExclamationTriangle,
+} from "react-icons/fa";
 
 export default function Sidebar({ onSelect, className = "" }) {
   const navigate = useNavigate();
@@ -14,13 +21,25 @@ export default function Sidebar({ onSelect, className = "" }) {
   const [employeeNotifCount, setEmployeeNotifCount] = useState(0);
   const employeeId = localStorage.getItem("id");
 
-  // Active state
-  const isEmployeeActive = location.search.includes("employees");
-  const isPayrollActive = location.search.includes("payroll");
-  const isPreviousPayrollsActive = location.search.includes("previous");
-  const isLeaveRequestActive = location.search.includes("LeaveRequest");
-  const isWorkFromHomeActive = location.search.includes("WorkFromHome");
-  const isPerformanceActive = location.search.includes("performance");
+  // Active state — also highlights correct tab for sub-pages
+  const { pathname, search } = location;
+  const isEmployeeActive =
+    search.includes("view=employees") ||
+    (pathname === "/welcome" && !search.includes("view=")) ||
+    pathname.startsWith("/employee/") ||
+    pathname.startsWith("/edit-employee") ||
+    pathname.startsWith("/add-employee") ||
+    pathname.startsWith("/add-hr");
+
+  const isPayrollActive =
+    search.includes("view=payroll") ||
+    pathname.startsWith("/add-payroll") ||
+    pathname.startsWith("/edit-payroll");
+
+  const isPreviousPayrollsActive = search.includes("view=previous");
+  const isLeaveRequestActive = search.includes("view=LeaveRequest");
+  const isWorkFromHomeActive = search.includes("view=WorkFromHome");
+  const isPerformanceActive = search.includes("view=performance");
 
   useEffect(() => {
     let interval;
@@ -35,7 +54,9 @@ export default function Sidebar({ onSelect, className = "" }) {
           const wfhRes = await axios.get(
             `${API_BASE}/api/work-from-home/pending-count`
           );
-          setPendingWfhCount(wfhRes.data?.data?.pending_work_from_home_requests ?? 0);
+          setPendingWfhCount(
+            wfhRes.data?.data?.pending_work_from_home_requests ?? 0
+          );
         }
         if (employeeId) {
           const resEmp = await axios.get(
@@ -56,31 +77,29 @@ export default function Sidebar({ onSelect, className = "" }) {
     return () => clearInterval(interval);
   }, [role, employeeId]);
 
+  const itemBase =
+    "cursor-pointer px-4 py-3.5 rounded-md transition-all duration-150 flex items-center gap-3";
+  const activeClass = "bg-primary-600 text-white font-semibold shadow";
+  const inactiveClass = "hover:bg-gray-100 text-gray-700";
+
   return (
     <div
-      className={`w-56 h-full bg-white text-black p-2 shadow-xl ${className}`}
+      className={`w-80 h-full bg-white text-black flex flex-col shadow-xl overflow-x-hidden ${className}`}
     >
-      <img
-        src={weisetechLogo}
-        alt="logo"
-        className="mb-6 w-40 mx-auto pt-4 object-contain"
-      />
-
-      <ul className="space-y-4 text-base font-medium pl-[10px]">
+      {/* Nav items */}
+      <ul className="flex-1 space-y-3 text-base font-medium px-2 py-8 overflow-y-auto overflow-x-hidden">
         {/* Employee Details */}
         <li
-          className={`cursor-pointer px-1 py-2 rounded-md transition transform whitespace-nowrap ${
-            isEmployeeActive
-              ? "bg-primary-600 text-white font-semibold shadow"
-              : "hover:bg-gray-100 hover:-translate-y-1"
-          }`}
+          title="Employee Details"
+          className={`${itemBase} ${isEmployeeActive ? activeClass : inactiveClass}`}
           onClick={() =>
             onSelect?.("employees") || navigate("/welcome?view=employees")
           }
         >
-          Employee Details
+          <FaUsers size={20} className="shrink-0" />
+          <span>Employee Details</span>
           {employeeNotifCount > 0 && role !== "admin" && role !== "hr" && (
-            <span className="ml-2 inline-flex items-center justify-center text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 border border-blue-200">
+            <span className="ml-auto inline-flex items-center justify-center text-xs px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 border border-blue-200">
               {employeeNotifCount}
             </span>
           )}
@@ -88,82 +107,78 @@ export default function Sidebar({ onSelect, className = "" }) {
 
         {/* Manage Payroll */}
         <li
-          className={`cursor-pointer px-1 py-2 rounded-md transition transform whitespace-nowrap ${
-            isPayrollActive
-              ? "bg-primary-600 text-white font-semibold shadow"
-              : "hover:bg-gray-100 hover:-translate-y-1"
-          }`}
+          title="Manage Payroll"
+          className={`${itemBase} ${isPayrollActive ? activeClass : inactiveClass}`}
           onClick={() =>
             onSelect?.("payroll") || navigate("/welcome?view=payroll")
           }
         >
-          Manage Payroll
+          <FaMoneyBillWave size={20} className="shrink-0" />
+          <span>Manage Payroll</span>
         </li>
+
+        {/* Previous Payrolls */}
         <li
-          className={`cursor-pointer px-1 py-2 rounded-md transition transform whitespace-nowrap ${
-            isPreviousPayrollsActive
-              ? "bg-primary-600 text-white font-semibold shadow"
-              : "hover:bg-gray-100 hover:-translate-y-1"
-          }`}
+          title="Previous Payrolls"
+          className={`${itemBase} ${isPreviousPayrollsActive ? activeClass : inactiveClass}`}
           onClick={() =>
             onSelect?.("previous") || navigate("/welcome?view=previous")
           }
         >
-          Previous Payrolls
+          <FaHistory size={20} className="shrink-0" />
+          <span>Previous Payrolls</span>
         </li>
+
+        {/* Manage Leave Request */}
         <li
-          className={`relative cursor-pointer px-1 py-2 rounded-md transition-transform whitespace-nowrap flex items-center justify-between group ${
-            isLeaveRequestActive
-              ? "bg-primary-600 text-white font-semibold shadow"
-              : "hover:bg-gray-100 hover:-translate-y-1"
-          }`}
+          title="Manage Leave Request"
+          className={`relative ${itemBase} ${isLeaveRequestActive ? activeClass : inactiveClass}`}
           onClick={() =>
             onSelect?.("LeaveRequest") || navigate("/welcome?view=LeaveRequest")
           }
         >
-          <span className="flex items-center">Manage Leave Request</span>
-
+          <FaCalendarAlt size={20} className="shrink-0" />
+          <span>Manage Leave Request</span>
           {pendingCount > 0 && (role === "admin" || role === "hr") && (
             <>
               <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-ping opacity-75"></span>
-              <span className="relative flex items-center justify-center min-w-[24px] h-6 px-2 -mt-4 -mr-1 text-xs font-bold rounded-full bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg transform -translate-y-1 border-2 border-white group-hover:scale-110 group-hover:-translate-y-2 transition-all duration-200">
+              <span className="ml-auto flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold rounded-full bg-red-500 text-white border border-white">
                 {pendingCount}
-                <span className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-red-600"></span>
               </span>
             </>
           )}
         </li>
+
+        {/* Manage Work From Home */}
         <li
-          className={`relative cursor-pointer px-1 py-2 rounded-md transition-transform whitespace-nowrap flex items-center justify-between group ${
-            isWorkFromHomeActive
-              ? "bg-primary-600 text-white font-semibold shadow"
-              : "hover:bg-gray-100 hover:-translate-y-1"
-          }`}
+          title="Manage Work From Home"
+          className={`relative ${itemBase} ${isWorkFromHomeActive ? activeClass : inactiveClass}`}
           onClick={() =>
             onSelect?.("WorkFromHome") || navigate("/welcome?view=WorkFromHome")
           }
         >
-          <span className="flex items-center">Manage Work From Home</span>
+          <FaHome size={20} className="shrink-0" />
+          <span>Manage Work From Home</span>
           {pendingWfhCount > 0 && (role === "admin" || role === "hr") && (
             <>
               <span className="absolute -top-1 -right-1 w-2 h-2 bg-amber-500 rounded-full animate-ping opacity-75"></span>
-              <span className="relative flex items-center justify-center min-w-[24px] h-6 px-2 -mt-4 -mr-1 text-xs font-bold rounded-full bg-amber-500 text-white shadow-lg transform -translate-y-1 border-2 border-white">
+              <span className="ml-auto flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold rounded-full bg-amber-500 text-white border border-white">
                 {pendingWfhCount}
               </span>
             </>
           )}
         </li>
+
+        {/* Performance Warning */}
         <li
-          className={`cursor-pointer px-1 py-2 rounded-md transition transform whitespace-nowrap ${
-            isPerformanceActive
-              ? "bg-primary-600 text-white font-semibold shadow"
-              : "hover:bg-gray-100 hover:-translate-y-1"
-          }`}
+          title="Performance Warning"
+          className={`${itemBase} ${isPerformanceActive ? activeClass : inactiveClass}`}
           onClick={() =>
             onSelect?.("performance") || navigate("/welcome?view=performance")
           }
         >
-          Performance Warning
+          <FaExclamationTriangle size={20} className="shrink-0" />
+          <span>Performance Warning</span>
         </li>
       </ul>
     </div>

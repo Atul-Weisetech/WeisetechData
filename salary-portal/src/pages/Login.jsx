@@ -72,7 +72,7 @@ export default function Login() {
       setTimeout(() => {
         if (res.data.role === "admin" || res.data.role === "hr") navigate("/welcome");
         else navigate("/home");
-      }, 1000);
+      }, 300);
     } catch (err) {
       toast.error("Invalid email or password");
     }

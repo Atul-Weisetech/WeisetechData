@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import Navbar from "../components/Navbar";
+import { useOutletContext } from "react-router-dom";
+import {
+  FaTachometerAlt,
+  FaMoneyBillWave,
+  FaBell,
+  FaCalendarAlt,
+  FaHome,
+} from "react-icons/fa";
 import LeaveRequest from "../components/LeaveRequest";
 import EmployeeTimeTracker from "../components/EmployeeTimeTracker";
 import WorkFromHomeRequest from "../components/WorkFromHomeRequest";
@@ -28,6 +35,10 @@ function WelcomeEmployee() {
   const [lastSeenReviewedCount, setLastSeenReviewedCount] = useState(0);
   const [unreadAppNotificationsCount, setUnreadAppNotificationsCount] = useState(0);
 
+  // Must be declared before any useEffect that references these values
+  const outletCtx = useOutletContext() || {};
+  const { isSidebarOpen = false, setIsSidebarOpen = () => {}, setNotificationCount = () => {} } = outletCtx;
+
   const employeeId = localStorage.getItem("id");
 
   const lastSeenStorageKey = useMemo(
@@ -35,9 +46,11 @@ function WelcomeEmployee() {
     [employeeId]
   );
 
+  useEffect(() => {
+    setNotificationCount(unreadAppNotificationsCount + Math.max(0, reviewedUpdatesCount - lastSeenReviewedCount));
+  }, [unreadAppNotificationsCount, reviewedUpdatesCount, lastSeenReviewedCount, setNotificationCount]);
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
   const [isTimeTrackerOpen, setIsTimeTrackerOpen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [timerState, setTimerState] = useState({
     isTracking: false, elapsedTime: 0, startTime: "",
     activityLogs: [], currentActivityType: "Working time",
@@ -334,6 +347,14 @@ function WelcomeEmployee() {
       alert("Failed to generate PDF");
     }
   };
+
+  const navItems = [
+    { id: "dashboard", label: "Dashboard", icon: <FaTachometerAlt size={20} /> },
+    { id: "payrolls", label: "Payrolls", icon: <FaMoneyBillWave size={20} /> },
+    { id: "notifications", label: "Notifications", icon: <FaBell size={20} />, showUpdateBadge: true },
+    { id: "leave-requests", label: "Leave Requests", icon: <FaCalendarAlt size={20} /> },
+    { id: "work-from-home", label: "Work From Home", icon: <FaHome size={20} /> },
+  ];
 
   const renderContent = () => {
     switch (activeSection) {
@@ -732,13 +753,7 @@ function WelcomeEmployee() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      <Navbar
-        onMenuClick={() => setIsSidebarOpen(true)}
-        notificationCount={unreadAppNotificationsCount + Math.max(0, reviewedUpdatesCount - lastSeenReviewedCount)}
-        onNotificationClick={() => setActiveSection("notifications")}
-      />
-
+    <div className="bg-gradient-to-br from-gray-50 to-blue-50 flex min-h-full w-full">
       {/* Mobile Sidebar Drawer */}
       {isSidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
@@ -746,38 +761,23 @@ function WelcomeEmployee() {
             className="absolute inset-0 bg-black/40"
             onClick={() => setIsSidebarOpen(false)}
           />
-          <div className="absolute left-0 top-0 h-full w-80 bg-white shadow-2xl overflow-y-auto">
-            <div className="p-6 border-b border-slate-200 flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <h1 className="text-xl font-bold text-gray-900 truncate">
-                  {employeeName}
-                </h1>
-                <p className="text-sm text-gray-600 mt-1 truncate">
-                  {designation}
-                </p>
-                <p className="text-xs text-gray-500 mt-2">
-                  Employee ID: {employeeId}
-                </p>
-              </div>
+          <div className="absolute left-0 top-0 h-full w-80 bg-white shadow-2xl flex flex-col">
+            {/* Mobile drawer header: close */}
+            <div className="px-4 pt-4 pb-3 border-b border-slate-100 flex justify-end">
               <button
                 type="button"
                 onClick={() => setIsSidebarOpen(false)}
-                className="w-10 h-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50"
+                className="w-9 h-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center text-lg"
                 aria-label="Close menu"
               >
                 ×
               </button>
             </div>
 
-            <nav className="p-6 border-none">
-              <ul className="space-y-3 border-none">
-                {[
-                  { id: "dashboard", label: "Dashboard", icon: "" },
-                  { id: "payrolls", label: "Payrolls", icon: "" },
-                  { id: "notifications", label: "Notifications", icon: "", showUpdateBadge: true },
-                  { id: "leave-requests", label: "Leave Requests", icon: "" },
-                  { id: "work-from-home", label: "Work From Home Requests", icon: "" },
-                ].map((item) => {
+            {/* Nav items */}
+            <nav className="flex-1 px-2 py-4 overflow-y-auto">
+              <ul className="space-y-3">
+                {navItems.map((item) => {
                   const hasUnseen = item.showUpdateBadge && (reviewedUpdatesCount > lastSeenReviewedCount || unreadAppNotificationsCount > 0);
                   return (
                     <li key={item.id}>
@@ -786,18 +786,16 @@ function WelcomeEmployee() {
                           setActiveSection(item.id);
                           setIsSidebarOpen(false);
                         }}
-                        className={`relative w-full text-left px-6 py-4 rounded-2xl transition-all duration-300 flex items-center space-x-4 ${
+                        className={`relative w-full text-left px-4 py-3.5 rounded-md transition-all duration-150 flex items-center gap-3 text-base font-medium ${
                           activeSection === item.id
-                            ? "bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg transform scale-[1.02]"
-                            : "text-gray-700 hover:bg-white hover:shadow-md "
+                            ? "bg-primary-600 text-white shadow"
+                            : "text-gray-700 hover:bg-gray-100"
                         }`}
                       >
-                        <span className="text-xl">{item.icon}</span>
-                        <span className="font-semibold">{item.label}</span>
+                        <span className="shrink-0">{item.icon}</span>
+                        <span>{item.label}</span>
                         {hasUnseen && (
-                          <>
-                            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-orange-500 rounded-full animate-ping opacity-75" aria-hidden />
-                          </>
+                          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-orange-500 rounded-full animate-ping opacity-75" aria-hidden />
                         )}
                       </button>
                     </li>
@@ -806,23 +804,6 @@ function WelcomeEmployee() {
               </ul>
             </nav>
 
-            {/* Logout in mobile drawer */}
-            <div className="px-6 pb-6">
-              <button
-                onClick={() => {
-                  setIsSidebarOpen(false);
-                  localStorage.removeItem("user");
-                  localStorage.removeItem("id");
-                  localStorage.removeItem("name");
-                  localStorage.removeItem("designation");
-                  window.location.href = "/";
-                }}
-                className="w-full px-6 py-4 rounded-2xl bg-gradient-to-r from-red-500 to-red-700 text-white font-semibold text-left flex items-center space-x-4 hover:from-red-600 hover:to-red-800 transition-all duration-300 shadow-md"
-              >
-                <span className="text-xl">🚪</span>
-                <span>Logout</span>
-              </button>
-            </div>
           </div>
         </div>
       )}
@@ -865,43 +846,26 @@ function WelcomeEmployee() {
         </div>
       )}
 
-      <div className="flex">
-        {/* Sidebar */}
-        <div className="hidden lg:block w-80 bg-white/80 backdrop-blur-lg shadow-xl border-r border-slate-200 min-h-screen">
-          <div className="p-8 border-b border-slate-200">
-            <h1 className="text-2xl font-bold text-gray-900">{employeeName}</h1>
-            <p className="text-sm text-gray-600 mt-1">{designation}</p>
-            <p className="text-xs text-gray-500 mt-2">
-              Employee ID: {employeeId}
-            </p>
-          </div>
-
-          <nav className="p-6 border-none">
-            <ul className="space-y-3 border-none">
-              {[
-                { id: "dashboard", label: "Dashboard", icon: "" },
-                { id: "payrolls", label: "Payrolls", icon: "" },
-                { id: "notifications", label: "Notifications", icon: "", showUpdateBadge: true },
-                { id: "leave-requests", label: "Leave Requests", icon: "" },
-                { id: "work-from-home", label: "Work From Home Requests", icon: "" },
-              ].map((item) => {
+      <div className="hidden lg:flex flex-col w-72 bg-white shadow-xl border-r border-slate-200 sticky top-0 self-start h-[calc(100vh-5rem)] overflow-y-auto overflow-x-hidden shrink-0">
+          {/* Nav items */}
+          <nav className="flex-1 px-2 py-4 overflow-y-auto overflow-x-hidden">
+            <ul className="space-y-3">
+              {navItems.map((item) => {
                 const hasUnseen = item.showUpdateBadge && (reviewedUpdatesCount > lastSeenReviewedCount || unreadAppNotificationsCount > 0);
                 return (
                   <li key={item.id}>
                     <button
                       onClick={() => setActiveSection(item.id)}
-                      className={`relative w-full text-left px-6 py-4 rounded-2xl transition-all duration-300 flex items-center space-x-4 ${
+                      className={`relative w-full text-left px-4 py-3.5 rounded-md transition-all duration-150 flex items-center gap-3 text-base font-medium ${
                         activeSection === item.id
-                          ? "bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg transform scale-105"
-                          : "text-gray-700 hover:bg-white hover:shadow-md "
+                          ? "bg-primary-600 text-white shadow"
+                          : "text-gray-700 hover:bg-gray-100"
                       }`}
                     >
-                      <span className="text-xl">{item.icon}</span>
-                      <span className="font-semibold">{item.label}</span>
+                      <span className="shrink-0">{item.icon}</span>
+                      <span>{item.label}</span>
                       {hasUnseen && (
-                        <>
-                          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-orange-500 rounded-full animate-ping opacity-75" aria-hidden />
-                        </>
+                        <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-orange-500 rounded-full animate-ping opacity-75" aria-hidden />
                       )}
                     </button>
                   </li>
@@ -909,14 +873,15 @@ function WelcomeEmployee() {
               })}
             </ul>
           </nav>
+
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 min-w-0 overflow-auto">
+        <div className="flex-1 min-w-0">
           {/* Reduce padding on small screens */}
           <div className="p-4 sm:p-6 lg:p-0">{renderContent()}</div>
         </div>
-      </div>
+
     </div>
   );
 }

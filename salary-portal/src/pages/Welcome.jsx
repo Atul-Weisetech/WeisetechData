@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
+import { toast } from "react-toastify";
 import AddPayrollBreakdown from "./AddPayrollBreakdown";
 import AddPayrollMetaTypes from "./AddPayrollMetaTypes";
 import ViewBreakdownPopup from "./ViewBreakdownPopup";
@@ -9,30 +9,31 @@ import ManageLeaveRequests from "../components/ManageLeaveRequests";
 import ManageWorkFromHome from "../components/ManageWorkFromHome";
 import PerformanceWarning from "../components/PerformanceWarning";
 import DownloadPayrollPDF from "../components/DownloadPayrollPDF";
-import CustomConfirmDialog from "../components/CustomConfirmDialog";
 import API_BASE from "../config";
 
 export default function Welcome() {
-  const [toast, setToast] = useState({ show: false, message: "", type: "" });
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  useEffect(() => {
-    if (toast.show) {
-      const timer = setTimeout(() => {
-        setToast({ ...toast, show: false });
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [toast]);
 
   const [employees, setEmployees] = useState([]);
   const [payrolls, setPayrolls] = useState([]);
   const [search, setSearch] = useState("");
   const [searchParams] = useSearchParams();
-  const initialView = searchParams.get("view") || "employees";
-  const [view, setView] = useState(initialView);
+  const [view, setView] = useState(searchParams.get("view") || "employees");
+
+  const viewTitleMap = {
+    employees: "Employee Details",
+    payroll: "Manage Payroll",
+    previous: "Previous Payrolls",
+    LeaveRequest: "Manage Leave Request",
+    WorkFromHome: "Manage Work From Home",
+    performance: "Performance Warning",
+  };
+  const pageTitle = viewTitleMap[view] || "Employee Details";
+
+  useEffect(() => {
+    setView(searchParams.get("view") || "employees");
+  }, [searchParams]);
   const [showModal, setShowModal] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
   const navigate = useNavigate();
@@ -81,13 +82,7 @@ export default function Welcome() {
       })
       .catch((err) => {
         console.error("Error fetching employees:", err);
-        setToast({
-          show: true,
-          type: "error",
-          message:
-            "Failed to fetch employees: " +
-            (err.response?.data?.error || err.message),
-        });
+        toast.error("Failed to fetch employees: " + (err.response?.data?.error || err.message));
         setEmployees([]);
       });
   };
@@ -101,20 +96,9 @@ export default function Welcome() {
       })
       .catch((err) => {
         console.error("Error fetching payrolls:", err);
-        setToast({
-          show: true,
-          type: "error",
-          message:
-            "Failed to fetch payrolls: " +
-            (err.response?.data?.error || err.message),
-        });
+        toast.error("Failed to fetch payrolls: " + (err.response?.data?.error || err.message));
         setPayrolls([]);
       });
-  };
-
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate("/", { replace: true });
   };
 
   const confirmDeactivate = (id) => {
@@ -135,17 +119,9 @@ export default function Welcome() {
       );
       fetchEmployees();
       setShowModal(false);
-      setToast({
-        show: true,
-        message: "Employee deactivated successfully!",
-        type: "success",
-      });
+      toast.success("Employee deactivated successfully!");
     } catch (err) {
-      setToast({
-        show: true,
-        message: "Failed to deactivate employee",
-        type: "error",
-      });
+      toast.error("Failed to deactivate employee");
     }
   };
   const handleDeletePayroll = async () => {
@@ -154,27 +130,17 @@ export default function Welcome() {
       fetchPayrolls();
       setShowModal(false);
     } catch (err) {
-      alert("Failed to delete payroll");
+      toast.error("Failed to delete payroll");
     }
   };
 
   const publishPayroll = async (id) => {
     try {
-      const res = await axios.post(
-        `${API_BASE}/api/payrolls/publish/${id}`
-      );
-      setToast({
-        show: true,
-        message: "Payroll Published successfully!",
-        type: "success",
-      });
+      await axios.post(`${API_BASE}/api/payrolls/publish/${id}`);
+      toast.success("Payroll Published successfully!");
       fetchPayrolls();
     } catch (err) {
-      setToast({
-        show: true,
-        message: "Failed to publish payroll",
-        type: "error",
-      });
+      toast.error("Failed to publish payroll");
     }
   };
 
@@ -217,24 +183,18 @@ export default function Welcome() {
 
     const unpublished = records.filter((r) => !r.is_published);
     if (unpublished.length === 0) {
-      alert("All payrolls are already published.");
+      toast.warning("All payrolls are already published.");
       return;
     }
 
     try {
       for (const rec of unpublished) {
-        await axios.post(
-          `${API_BASE}/api/payrolls/publish/${rec.id}`
-        );
+        await axios.post(`${API_BASE}/api/payrolls/publish/${rec.id}`);
       }
-      alert(
-        `Published ${unpublished.length} payroll(s) for ${formatMonth(
-          monthKey
-        )}.`
-      );
+      toast.success(`Published ${unpublished.length} payroll(s) for ${formatMonth(monthKey)}.`);
       fetchPayrolls();
     } catch (err) {
-      alert("Error occurred while publishing payrolls.");
+      toast.error("Error occurred while publishing payrolls.");
     }
   };
 
@@ -251,7 +211,7 @@ export default function Welcome() {
       })
       .catch((err) => {
         console.error(err);
-        alert("Failed to fetch breakdown");
+        toast.error("Failed to fetch breakdown");
       });
   };
 
@@ -299,11 +259,7 @@ export default function Welcome() {
   const handleGenerateAllBulk = async () => {
     const { monthRaw, date, mode } = bulkForm;
     if (!monthRaw || !date || !mode) {
-      setToast({
-        show: true,
-        type: "error",
-        message: "Select month, date and payment mode",
-      });
+      toast.warning("Select month, date and payment mode");
       return;
     }
     try {
@@ -323,11 +279,7 @@ export default function Welcome() {
         }));
 
       if (!bulkPayload.length) {
-        setToast({
-          show: true,
-          type: "error",
-          message: "No employees with valid salary found",
-        });
+        toast.warning("No employees with valid salary found");
         return;
       }
 
@@ -347,70 +299,24 @@ export default function Welcome() {
         created = results.map((r) => r.data);
       }
 
-      setToast({
-        show: true,
-        type: "success",
-        message: `Generated ${created.length} payrolls successfully`,
-      });
+      toast.success(`Generated ${created.length} payrolls successfully`);
       setIsGenerateAllOpen(false);
       fetchPayrolls();
     } catch (e) {
       console.error(e);
-      setToast({
-        show: true,
-        type: "error",
-        message: "Bulk generation failed",
-      });
+      toast.error("Bulk generation failed");
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Mobile Sidebar Drawer */}
-      {isSidebarOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setIsSidebarOpen(false)}
-          />
-          <div className="absolute left-0 top-0 h-full w-72 bg-white shadow-2xl">
-            <div className="flex items-center justify-between px-4 py-3 border-b">
-              <div className="font-semibold text-slate-800">Menu</div>
-              <button
-                type="button"
-                onClick={() => setIsSidebarOpen(false)}
-                className="w-10 h-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50"
-                aria-label="Close menu"
-              >
-                ×
-              </button>
-            </div>
-            <Sidebar
-              onSelect={(v) => {
-                setView(v);
-                setIsSidebarOpen(false);
-              }}
-              className="shadow-none"
-            />
-          </div>
-        </div>
-      )}
-
-      <div className="flex min-h-screen">
-        {/* Desktop Sidebar */}
-        <aside className="hidden lg:block w-56 shrink-0 sticky top-0 h-screen">
-          <Sidebar onSelect={(v) => setView(v)} className="h-screen" />
-        </aside>
-
-        {/* Main */}
-        <main className="flex-1 min-w-0 p-4 sm:p-6">
-          {/* Header */}
-          <header className="mb-6">
-            {/* Desktop: Single row with everything */}
+    <div className="p-4 sm:p-6">
+      {/* Header */}
+      <header className="mb-6">
+        {/* Desktop: Single row with everything */}
             <div className="hidden sm:flex sm:items-center sm:justify-between sm:gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <h1 className="text-xl sm:text-2xl font-bold text-blue-700 truncate">
-                  HR Portal
+                  {pageTitle}
                 </h1>
               </div>
 
@@ -442,30 +348,16 @@ export default function Welcome() {
                     )}
                   </>
                 )}
-                <button
-                  onClick={() => setShowLogoutConfirm(true)}
-                  className="bg-red-600 text-white px-3 py-2 rounded hover:bg-red-700 whitespace-nowrap"
-                >
-                  Logout
-                </button>
               </div>
             </div>
 
             {/* Mobile: Multi-line layout */}
             <div className="sm:hidden space-y-3">
-              {/* First line: Menu, HR Portal, Search Icon, Actions Menu */}
+              {/* First line: Menu, {pageTitle}, Search Icon, Actions Menu */}
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <button
-                    type="button"
-                    onClick={() => setIsSidebarOpen(true)}
-                    className="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 shadow-sm shrink-0"
-                    aria-label="Open menu"
-                  >
-                    ☰
-                  </button>
                   <h1 className="text-xl font-bold text-blue-700 truncate">
-                    HR Portal
+                    {pageTitle}
                   </h1>
                 </div>
                  {/* Search Icon - Mobile Only */}
@@ -564,15 +456,6 @@ export default function Welcome() {
                             <div className="border-t border-slate-200 my-1"></div>
                           </>
                         )}
-                        <button
-                          onClick={() => {
-                            setIsActionsMenuOpen(false);
-                            setShowLogoutConfirm(true);
-                          }}
-                          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                        >
-                          Logout
-                        </button>
                       </div>
                     </>
                   )}
@@ -703,26 +586,6 @@ export default function Welcome() {
             </div>
           )}
 
-
-      {toast.show && (
-        <div className="flex justify-center mb-4">
-          <div
-            className={`max-w-2xl w-full px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 text-sm font-medium
-              ${
-                toast.type === "success"
-                  ? "bg-green-50 text-green-800 border border-green-300"
-                  : "bg-red-50 text-red-800 border border-red-300"
-              }`}
-          >
-            {toast.type === "success" ? (
-              <span className="text-green-600 text-lg">✅</span>
-            ) : (
-              <span className="text-red-600 text-lg">❌</span>
-            )}
-            <span>{toast.message}</span>
-          </div>
-        </div>
-      )}
 
       {view === "LeaveRequest" && <ManageLeaveRequests />}
       {view === "WorkFromHome" && <ManageWorkFromHome />}
@@ -1096,17 +959,6 @@ export default function Welcome() {
           </div>
         </div>
       )}
-        </main>
-      </div>
-
-      <CustomConfirmDialog
-        show={showLogoutConfirm}
-        message="Are you sure you want to logout?"
-        confirmText="Logout"
-        cancelText="Cancel"
-        onConfirm={handleLogout}
-        onCancel={() => setShowLogoutConfirm(false)}
-      />
     </div>
   );
 }

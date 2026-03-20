@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
 import { toast } from "react-toastify";
 import AddPayrollBreakdown from "./AddPayrollBreakdown"; // adjust path if different
 import API_BASE from "../config";
 
 export default function AddPayroll() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [employees, setEmployees] = useState([]);
   const [selectedId, setSelectedId] = useState("");
   const [form, setForm] = useState({
@@ -207,65 +205,17 @@ export default function AddPayroll() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Mobile Sidebar Drawer */}
-      {isSidebarOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setIsSidebarOpen(false)}
-          />
-          <div className="absolute left-0 top-0 h-full w-72 bg-white shadow-2xl">
-            <div className="flex items-center justify-between px-4 py-3 border-b">
-              <div className="font-semibold text-slate-800">Menu</div>
-              <button
-                type="button"
-                onClick={() => setIsSidebarOpen(false)}
-                className="w-10 h-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50"
-                aria-label="Close menu"
-              >
-                ×
-              </button>
-            </div>
-            <Sidebar
-              onSelect={() => setIsSidebarOpen(false)}
-              className="shadow-none"
-            />
-          </div>
-        </div>
-      )}
-
-      <div className="flex min-h-screen">
-        {/* Desktop Sidebar */}
-        <aside className="hidden lg:block w-56 shrink-0 sticky top-0 h-screen">
-          <Sidebar className="h-screen" />
-        </aside>
-
-        <main className="flex-1 min-w-0 p-4 sm:p-6">
-          <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
-            <div className="flex items-center gap-3 min-w-0">
-              <button
-                type="button"
-                onClick={() => setIsSidebarOpen(true)}
-                className="lg:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 shadow-sm"
-                aria-label="Open menu"
-              >
-                ☰
-              </button>
-              <h1 className="text-xl sm:text-2xl font-bold text-blue-700 truncate">
-                🏢 Weisetech HR Portal
-              </h1>
-            </div>
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => navigate("/welcome?view=payroll")}
-                className="bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700"
-              >
-                Back
-              </button>
-            </div>
-          </header>
+    <>
+      <div className="p-4 sm:p-6">
+        <header className="flex justify-between items-center gap-3 mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-blue-700">Generate Payroll</h1>
+          <button
+            onClick={() => navigate("/welcome?view=payroll")}
+            className="bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700"
+          >
+            Back
+          </button>
+        </header>
 
         <div className="bg-white w-full max-w-2xl mx-auto rounded-lg shadow p-6">
           <h2 className="text-lg sm:text-xl font-semibold mb-4 text-blue-600">Generate Payroll</h2>
@@ -357,7 +307,6 @@ export default function AddPayroll() {
             </button>
           </div>
         </div>
-        </main>
       </div>
 
       <AddPayrollBreakdown
@@ -369,6 +318,6 @@ export default function AddPayroll() {
         defaultEmployeeId={selectedId ? String(selectedId) : ""}
         defaultPayrollId={lastCreatedPayrollId ? String(lastCreatedPayrollId) : ""}
       />
-    </div>
+    </>
   );
 }

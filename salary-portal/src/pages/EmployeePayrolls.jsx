@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-import Sidebar from "../components/Sidebar";
 import DownloadPayrollPDF from "../components/DownloadPayrollPDF";
 import API_BASE from "../config";
 
@@ -13,7 +12,6 @@ export default function EmployeePayrolls() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [breakdownData, setBreakdownData] = useState({});
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -103,72 +101,25 @@ export default function EmployeePayrolls() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Mobile Sidebar Drawer */}
-      {isSidebarOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setIsSidebarOpen(false)}
-          />
-          <div className="absolute left-0 top-0 h-full w-72 bg-white shadow-2xl">
-            <div className="flex items-center justify-between px-4 py-3 border-b">
-              <div className="font-semibold text-slate-800">Menu</div>
-              <button
-                type="button"
-                onClick={() => setIsSidebarOpen(false)}
-                className="w-10 h-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50"
-                aria-label="Close menu"
-              >
-                ×
-              </button>
-            </div>
-            <Sidebar
-              onSelect={() => setIsSidebarOpen(false)}
-              className="shadow-none"
-            />
-          </div>
+    <div className="p-4 sm:p-6">
+      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold text-blue-700 truncate">Published Payrolls</h1>
+          <p className="text-sm text-gray-500">Employee ID: {id}</p>
+          {employeeData && (
+            <p className="text-sm text-gray-600 truncate">
+              {employeeData.first_name} {employeeData.last_name} -{" "}
+              {employeeData.designation}
+            </p>
+          )}
         </div>
-      )}
-
-      <div className="flex min-h-screen">
-        {/* Desktop Sidebar */}
-        <aside className="hidden lg:block w-56 shrink-0 sticky top-0 h-screen">
-          <Sidebar className="h-screen" />
-        </aside>
-
-        <main className="flex-1 min-w-0 p-4 sm:p-6">
-          <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
-            <div className="flex items-start gap-3 min-w-0">
-              <button
-                type="button"
-                onClick={() => setIsSidebarOpen(true)}
-                className="lg:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 shadow-sm"
-                aria-label="Open menu"
-              >
-                ☰
-              </button>
-              <div className="min-w-0">
-                <h1 className="text-xl font-bold text-blue-700 truncate">
-                  Published Payrolls
-                </h1>
-                <p className="text-sm text-gray-500">Employee ID: {id}</p>
-                {employeeData && (
-                  <p className="text-sm text-gray-600 truncate">
-                    {employeeData.first_name} {employeeData.last_name} -{" "}
-                    {employeeData.designation}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <button
-              onClick={() => navigate("/welcome?view=employees")}
-              className="bg-primary-600 text-white px-6 py-2 rounded hover:bg-primary-700"
-            >
-              Back
-            </button>
-          </header>
+        <button
+          onClick={() => navigate("/welcome?view=employees")}
+          className="bg-primary-600 text-white px-6 py-2 rounded hover:bg-primary-700"
+        >
+          Back
+        </button>
+      </header>
 
         {error && (
           <div className="mb-4 px-4 py-2 rounded border border-red-200 bg-red-50 text-red-700">
@@ -226,8 +177,6 @@ export default function EmployeePayrolls() {
             </div>
           </div>
         )}
-        </main>
-      </div>
     </div>
   );
 }

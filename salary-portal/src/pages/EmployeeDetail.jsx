@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-import Sidebar from "../components/Sidebar";
 import API_BASE from "../config";
 
 const MONTHS = [
@@ -12,8 +11,6 @@ const MONTHS = [
 export default function EmployeeDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
   const [employee, setEmployee]     = useState(null);
   const [empLoading, setEmpLoading] = useState(true);
 
@@ -75,69 +72,17 @@ export default function EmployeeDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Mobile Sidebar Drawer */}
-      {isSidebarOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setIsSidebarOpen(false)} />
-          <div className="absolute left-0 top-0 h-full w-72 bg-white shadow-2xl">
-            <div className="flex items-center justify-between px-4 py-3 border-b">
-              <div className="font-semibold text-slate-800">Menu</div>
-              <button
-                type="button"
-                onClick={() => setIsSidebarOpen(false)}
-                className="w-10 h-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50"
-                aria-label="Close menu"
-              >
-                ×
-              </button>
-            </div>
-            <Sidebar onSelect={() => setIsSidebarOpen(false)} className="shadow-none" />
-          </div>
+    <div className="p-4 sm:p-6 overflow-x-hidden max-w-full">
+      <header className="mb-6">
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="text-xl sm:text-2xl font-bold text-blue-700 truncate">Employee Details</h1>
+          <button
+            onClick={() => navigate("/welcome?view=employees")}
+            className="bg-primary-600 text-white px-3 py-2 rounded hover:bg-primary-700 whitespace-nowrap shrink-0"
+          >
+            Back
+          </button>
         </div>
-      )}
-
-      <div className="flex min-h-screen">
-        {/* Desktop Sidebar */}
-        <aside className="hidden lg:block w-56 shrink-0 sticky top-0 h-screen">
-          <Sidebar className="h-screen" />
-        </aside>
-
-        {/* Main */}
-        <main className="flex-1 min-w-0 p-4 sm:p-6 overflow-x-hidden max-w-full">
-
-          {/* Header */}
-          <header className="mb-6">
-            <div className="hidden sm:flex sm:items-center sm:justify-between sm:gap-3">
-              <h1 className="text-xl sm:text-2xl font-bold text-blue-700 truncate">Employee Details</h1>
-              <button
-                onClick={() => navigate("/welcome?view=employees")}
-                className="bg-primary-600 text-white px-3 py-2 rounded hover:bg-primary-700 whitespace-nowrap"
-              >
-                Back
-              </button>
-            </div>
-            <div className="sm:hidden space-y-3">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <button
-                    type="button"
-                    onClick={() => setIsSidebarOpen(true)}
-                    className="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 shadow-sm shrink-0"
-                    aria-label="Open menu"
-                  >
-                    ☰
-                  </button>
-                  <h1 className="text-lg font-bold text-blue-700 truncate">Employee Details</h1>
-                </div>
-                <button
-                  onClick={() => navigate("/welcome?view=employees")}
-                  className="bg-primary-600 text-white px-3 py-2 text-sm rounded hover:bg-primary-700 whitespace-nowrap shrink-0"
-                >
-                  Back
-                </button>
-              </div>
-            </div>
           </header>
 
           {empLoading ? (
@@ -266,8 +211,6 @@ export default function EmployeeDetail() {
               </div>
             </>
           )}
-        </main>
-      </div>
     </div>
   );
 }

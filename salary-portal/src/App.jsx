@@ -5,6 +5,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
+import MainLayout from "./layouts/MainLayout";
 import Login from "./pages/Login";
 import Welcome from "./pages/Welcome";
 import AddEmployee from "./pages/AddEmployee";
@@ -18,7 +19,6 @@ import EmployeePayrolls from "./pages/EmployeePayrolls";
 import EmployeeLeaves from "./pages/EmployeeLeaves";
 import EmployeeDetail from "./pages/EmployeeDetail";
 import { NotificationProvider } from "./contexts/NotificationContext";
-// import AddPayrollBreakdown from "./pages/AddPayrollBreakdown";
 
 function App() {
   const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -37,108 +37,45 @@ function App() {
     <NotificationProvider>
       <Router>
         <Routes>
-        {/* Public Route */}
-        <Route path="/" element={<Login />} />
+          {/* Public Route */}
+          <Route path="/" element={<Login />} />
 
-        {/* Protected HR/Admin Dashboard */}
-        <Route
-          path="/welcome"
-          element={
-            <ProtectedRoute allowedRoles={["admin", "hr"]}>
-              <Welcome />
-            </ProtectedRoute>
-          }
-        />
+          {/* Employee Route — MainLayout reads role and shows Employee header */}
+          <Route element={<MainLayout />}>
+            <Route path="/home" element={<WelcomeEmployee />} />
+          </Route>
 
-        {/* Employee Welcome Page (unprotected or protect as needed) */}
-        <Route path="/home" element={<WelcomeEmployee />} />
+          {/* HR / Admin Routes — protected + MainLayout shows HR header + sidebar */}
+          <Route
+            element={
+              <ProtectedRoute allowedRoles={["admin", "hr"]}>
+                <MainLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/welcome" element={<Welcome />} />
+            <Route path="/add-employee" element={<AddEmployee />} />
+            <Route path="/edit-employee/:id" element={<EditEmployee />} />
+            <Route path="/add-payroll" element={<AddPayroll />} />
+            <Route path="/edit-payroll/:id" element={<EditPayroll />} />
+            <Route path="/employee/:id/payrolls" element={<EmployeePayrolls />} />
+            <Route path="/employee/:id/leaves" element={<EmployeeLeaves />} />
+            <Route path="/employee/:id" element={<EmployeeDetail />} />
+            <Route
+              path="/add-hr"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <AddHR />
+                </ProtectedRoute>
+              }
+            />
+          </Route>
 
-        {/* Admin/HR-only Routes */}
-        <Route
-          path="/add-employee"
-          element={
-            <ProtectedRoute allowedRoles={["admin", "hr"]}>
-              <AddEmployee />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/add-hr"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <AddHR />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/edit-employee/:id"
-          element={
-            <ProtectedRoute allowedRoles={["admin", "hr"]}>
-              <EditEmployee />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/add-payroll"
-          element={
-            <ProtectedRoute allowedRoles={["admin", "hr"]}>
-              <AddPayroll />
-            </ProtectedRoute>
-          }
-        />
-{/* 
-        <Route
-          path="/add-payroll-breakdown/:id"
-          element={
-            <ProtectedRoute allowedRoles={["admin", "hr"]}>
-              <AddPayrollBreakdown />
-            </ProtectedRoute>
-          }
-        /> */}
-
-        <Route
-          path="/edit-payroll/:id"
-          element={
-            <ProtectedRoute allowedRoles={["admin", "hr"]}>
-              <EditPayroll />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/employee/:id/payrolls"
-          element={
-            <ProtectedRoute allowedRoles={["admin", "hr"]}>
-              <EmployeePayrolls />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/employee/:id/leaves"
-          element={
-            <ProtectedRoute allowedRoles={["admin", "hr"]}>
-              <EmployeeLeaves />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/employee/:id"
-          element={
-            <ProtectedRoute allowedRoles={["admin", "hr"]}>
-              <EmployeeDetail />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Fallback route for unmatched URLs */}
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
-    </Router>
-    <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick pauseOnHover draggable />
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </Router>
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick pauseOnHover draggable />
     </NotificationProvider>
   );
 }
