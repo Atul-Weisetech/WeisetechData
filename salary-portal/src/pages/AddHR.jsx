@@ -3,7 +3,7 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaArrowLeft } from "react-icons/fa";
 import { toast } from "react-toastify";
 import API_BASE from "../config";
 
@@ -38,10 +38,18 @@ export default function AddHR() {
   });
 
   return (
-    <div className="max-w-md mx-auto mt-6 sm:mt-16 bg-white p-4 sm:p-6 rounded shadow relative">
-      <h2 className="text-xl font-semibold mb-4 text-center text-blue-700">
-        Add New HR
-      </h2>
+    <div className="w-full bg-white p-4 sm:p-8">
+      <div className="flex items-center justify-between mb-6">
+        <button
+          type="button"
+          onClick={() => navigate("/welcome")}
+          className="flex items-center gap-2 text-gray-600 hover:text-blue-700 transition text-sm font-medium"
+        >
+          <FaArrowLeft size={13} /> Back
+        </button>
+        <h2 className="text-xl font-semibold text-blue-700">Add New HR</h2>
+        <div className="w-16" />
+      </div>
       <form onSubmit={formik.handleSubmit} className="space-y-4">
         {/* First Name */}
         <div>
@@ -113,22 +121,12 @@ export default function AddHR() {
           )}
         </div>
 
-        {/* Submit + Back Buttons */}
-        <div className="flex gap-3">
-          <button
-            type="submit"
-            className="flex-1 bg-primary-600 text-white py-2 rounded hover:bg-primary-700 transition"
-          >
-            Add HR
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate("/welcome")}
-            className="flex-1 bg-primary-600 text-white py-2 rounded hover:bg-primary-700 transition"
-          >
-            Back
-          </button>
-        </div>
+        <button
+          type="submit"
+          className="w-full bg-primary-600 text-white py-2 rounded hover:bg-primary-700 transition"
+        >
+          Add HR
+        </button>
       </form>
     </div>
   );

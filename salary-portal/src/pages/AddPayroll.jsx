@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { FaArrowLeft } from "react-icons/fa";
 import AddPayrollBreakdown from "./AddPayrollBreakdown"; // adjust path if different
 import API_BASE from "../config";
 
@@ -207,14 +208,15 @@ export default function AddPayroll() {
   return (
     <>
       <div className="p-4 sm:p-6">
-        <header className="flex justify-between items-center gap-3 mb-6">
-          <h1 className="text-xl sm:text-2xl font-bold text-blue-700">Generate Payroll</h1>
+        <header className="flex items-center justify-between gap-3 mb-6">
           <button
             onClick={() => navigate("/welcome?view=payroll")}
-            className="bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700"
+            className="flex items-center gap-2 text-gray-600 hover:text-blue-700 transition text-sm font-medium"
           >
-            Back
+            <FaArrowLeft size={13} /> Back
           </button>
+          <h1 className="text-xl sm:text-2xl font-bold text-blue-700">Generate Payroll</h1>
+          <div className="w-16" />
         </header>
 
         <div className="bg-white w-full max-w-2xl mx-auto rounded-lg shadow p-6">

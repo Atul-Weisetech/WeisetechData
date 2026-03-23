@@ -4,11 +4,39 @@ import axios from "axios";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { toast } from "react-toastify";
+import { FaArrowLeft } from "react-icons/fa";
 import API_BASE from "../config";
+
+const fullWidthFields = new Set(["first_name", "last_name", "email_address"]);
+
+const labelMap = {
+  first_name: "First Name",
+  last_name: "Last Name",
+  email_address: "Email Address",
+  city: "City",
+  state: "State",
+  postal_code: "Postal Code",
+  salary: "Salary",
+  deduction: "Deduction",
+  joining_date: "Joining Date",
+};
+
+const placeholderMap = {
+  first_name: "Enter first name",
+  last_name: "Enter last name",
+  email_address: "Enter email address",
+  city: "Enter city",
+  state: "Enter state",
+  postal_code: "Enter postal code",
+  salary: "Enter monthly salary (e.g. 50000)",
+  deduction: "Enter deduction amount (e.g. 2000)",
+  joining_date: "",
+};
 
 export default function EditEmployee() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
 
   const formik = useFormik({
     initialValues: {
@@ -39,21 +67,13 @@ export default function EditEmployee() {
       try {
         const updatedData = {
           ...values,
-          joining_date: parseInt(
-            new Date(values.joining_date).getTime() / 1000
-          ),
+          joining_date: parseInt(new Date(values.joining_date).getTime() / 1000),
           last_update_date: new Date().toISOString().slice(0, 19).replace("T", " "),
         };
-
-        await axios.put(
-          `${API_BASE}/api/employees/${id}`,
-          updatedData
-        );
-
+        await axios.put(`${API_BASE}/api/employees/${id}`, updatedData);
         toast.success("Employee updated successfully");
         setTimeout(() => navigate("/welcome"), 2000);
       } catch (err) {
-        console.error("Update error:", err);
         if (err.response?.data?.error === "Email already in use by another employee") {
           toast.error("This email is already assigned to another employee.");
         } else {
@@ -77,7 +97,6 @@ export default function EditEmployee() {
             const day = String(dateObj.getDate()).padStart(2, "0");
             formattedDate = `${year}-${month}-${day}`;
           }
-
           formik.setValues({
             first_name: emp.first_name || "",
             last_name: emp.last_name || "",
@@ -93,47 +112,69 @@ export default function EditEmployee() {
           toast.error("Employee not found");
         }
       })
-      .catch((err) => console.error(err));
+      .catch((err) => console.error(err))
+      .finally(() => setLoading(false));
   }, [id]);
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20 text-gray-400 text-lg">
+        Loading employee...
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-xl mx-auto mt-6 sm:mt-10 bg-white p-4 sm:p-6 rounded shadow-md">
-      <h2 className="text-xl font-semibold mb-4 text-blue-700 text-center">Edit Employee</h2>
+    <div className="w-full bg-white p-4 sm:p-8">
+      <div className="flex items-center justify-between mb-6">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-gray-600 hover:text-blue-700 transition text-sm font-medium"
+        >
+          <FaArrowLeft size={13} /> Back
+        </button>
+        <h2 className="text-xl font-semibold text-blue-700">Edit Employee</h2>
+        <div className="w-16" />
+      </div>
 
       <form onSubmit={formik.handleSubmit}>
-        {Object.keys(formik.values).map((field) => (
-          <div key={field} className="mb-4">
-            <label className="block mb-1 font-medium text-gray-700">
-              {field.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
-            </label>
-            <input
-              type={field.includes("date") ? "date" : "text"}
-              name={field}
-              value={formik.values[field]}
-              onChange={formik.handleChange}
-              placeholder={field === "joining_date" ? "" : `Enter ${field.replace(/_/g, " ")}`}
-              className="w-full border px-3 py-2 rounded focus:ring-2 focus:ring-blue-400 focus:outline-none"
-            />
-            {formik.touched[field] && formik.errors[field] && (
-              <p className="text-red-500 text-sm mt-1">{formik.errors[field]}</p>
-            )}
-          </div>
-        ))}
-        <div className="flex gap-3 mt-4">
-          <button
-            type="submit"
-            className="bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 transition-colors"
-          >
-            Save
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate("/welcome")}
-            className="bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 transition-colors"
-          >
-            Back
-          </button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Object.keys(formik.initialValues).map((field) => (
+            <div
+              key={field}
+              className={fullWidthFields.has(field) ? "sm:col-span-2 lg:col-span-3" : ""}
+            >
+              <label className="block mb-1 font-medium text-gray-700">
+                {labelMap[field] || field.replace(/_/g, " ")}
+              </label>
+              <input
+                type={
+                  field.includes("date")
+                    ? "date"
+                    : field === "salary" || field === "deduction"
+                    ? "number"
+                    : "text"
+                }
+                name={field}
+                placeholder={placeholderMap[field] || ""}
+                value={formik.values[field]}
+                onChange={formik.handleChange}
+                className="w-full border px-3 py-2 rounded focus:ring-2 focus:ring-blue-400 focus:outline-none"
+              />
+              {formik.touched[field] && formik.errors[field] && (
+                <p className="text-red-500 text-sm mt-1">{formik.errors[field]}</p>
+              )}
+            </div>
+          ))}
         </div>
+
+        <button
+          type="submit"
+          className="bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 w-full mt-6"
+        >
+          Save Changes
+        </button>
       </form>
     </div>
   );

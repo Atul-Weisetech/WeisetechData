@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import DataTable from "react-data-table-component";
+import { FaArrowLeft } from "react-icons/fa";
 import API_BASE from "../config";
 
 const tableCustomStyles = {
@@ -122,13 +123,14 @@ export default function EmployeeLeaves() {
     <div className="p-4 sm:p-6">
       <header className="mb-6">
         <div className="flex items-center justify-between gap-3">
-          <h1 className="text-xl sm:text-2xl font-bold text-blue-700 truncate">Employee Leave Requests</h1>
           <button
             onClick={() => navigate("/welcome?view=employees")}
-            className="bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 transition-colors whitespace-nowrap"
+            className="flex items-center gap-2 text-gray-600 hover:text-blue-700 transition text-sm font-medium"
           >
-            Back
+            <FaArrowLeft size={13} /> Back
           </button>
+          <h1 className="text-xl sm:text-2xl font-bold text-blue-700 truncate">Employee Leave Requests</h1>
+          <div className="w-16" />
         </div>
         {employeeData && (
           <div className="mt-4 p-3 sm:p-4 bg-white rounded-lg shadow">

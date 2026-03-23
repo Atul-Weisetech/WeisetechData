@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import DataTable from "react-data-table-component";
-import { FaEdit, FaUserSlash, FaMoneyBillWave, FaCalendarAlt, FaEllipsisV } from "react-icons/fa";
+import { FaEdit, FaUserSlash, FaMoneyBillWave, FaCalendarAlt, FaEllipsisV, FaSearch, FaTimes } from "react-icons/fa";
 import { toast } from "react-toastify";
 import AddPayrollBreakdown from "./AddPayrollBreakdown";
 import AddPayrollMetaTypes from "./AddPayrollMetaTypes";
@@ -514,7 +514,7 @@ export default function Welcome() {
                       className="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 shadow-sm shrink-0"
                       aria-label="Toggle search"
                     >
-                      🔍
+                      <FaSearch size={15} />
                     </button>
                   )}
                 
@@ -529,7 +529,7 @@ export default function Welcome() {
                     className="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 shadow-sm shrink-0"
                     aria-label="Actions menu"
                   >
-                    ⋮
+                    <FaEllipsisV size={15} />
                   </button>
                   
                   {/* Actions Menu Dropdown */}
@@ -645,24 +645,27 @@ export default function Welcome() {
 
           </header>
 
-          {/* Modal */}
-          {/* Removed AddPayrollBreakdown trigger from header */}
-          <AddPayrollBreakdown
-            isOpen={isBreakdownOpen}
-            onClose={() => setIsBreakdownOpen(false)}
-          />
-          <AddPayrollMetaTypes
-            isOpen={isMetaTypeOpen}
-            onClose={() => setIsMetaTypeOpen(false)}
-          />
-          <ViewBreakdownPopup
-            isOpen={isViewBreakdownOpen}
-            onClose={() => setIsViewBreakdownOpen(false)}
-            breakdownData={breakdownData}
-            onRefresh={refreshBreakdown}
-            payrollId={selectedPayroll?.id}
-            employeeId={selectedPayroll?.fk_employee_id}
-          />
+          {/* Payroll-only modals — only mount when on payroll views */}
+          {["payroll", "previous"].includes(view) && (
+            <>
+              <AddPayrollBreakdown
+                isOpen={isBreakdownOpen}
+                onClose={() => setIsBreakdownOpen(false)}
+              />
+              <AddPayrollMetaTypes
+                isOpen={isMetaTypeOpen}
+                onClose={() => setIsMetaTypeOpen(false)}
+              />
+              <ViewBreakdownPopup
+                isOpen={isViewBreakdownOpen}
+                onClose={() => setIsViewBreakdownOpen(false)}
+                breakdownData={breakdownData}
+                onRefresh={refreshBreakdown}
+                payrollId={selectedPayroll?.id}
+                employeeId={selectedPayroll?.fk_employee_id}
+              />
+            </>
+          )}
 
           {isGenerateAllOpen && (
             <div className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex justify-center items-center z-50">
@@ -671,7 +674,7 @@ export default function Welcome() {
                   onClick={() => setIsGenerateAllOpen(false)}
                   className="absolute top-3 right-3 text-gray-500 hover:text-gray-800"
                 >
-                  ✖
+                  <FaTimes size={14} />
                 </button>
                 <h2 className="text-xl font-bold text-center text-blue-700 mb-4">
                   Generate All Payrolls

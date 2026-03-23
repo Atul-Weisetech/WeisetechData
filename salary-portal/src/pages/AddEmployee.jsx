@@ -167,12 +167,21 @@ export default function AddEmployee() {
           })}
           </div>
 
-          <button
-            type="submit"
-            className="bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 w-full mt-6"
-          >
-            Add Employee
-          </button>
+          <div className="flex items-center gap-3 mt-6">
+            <button
+              type="submit"
+              className="bg-primary-600 text-white px-6 py-2 rounded hover:bg-primary-700 font-medium"
+            >
+              Add Employee
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/welcome")}
+              className="border border-gray-300 text-gray-600 px-6 py-2 rounded hover:bg-gray-50 font-medium"
+            >
+              Cancel
+            </button>
+          </div>
         </form>
       </div>
   );

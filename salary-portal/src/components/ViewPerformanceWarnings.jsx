@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { RefreshCw, X } from 'lucide-react';
+import { FaArrowLeft } from 'react-icons/fa';
 import axios from 'axios';
 import DataTable from 'react-data-table-component';
 import { useNotification } from '../contexts/NotificationContext';
@@ -188,7 +190,7 @@ function ViewPerformanceWarnings({ onBack }) {
                   className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-primary-500"
                 />
                 {editForm.warning_types.length > 1 && (
-                  <button type="button" onClick={() => removeWarningTypeFromEdit(idx)} className="text-red-600 hover:text-red-800 text-xs">✕</button>
+                  <button type="button" onClick={() => removeWarningTypeFromEdit(idx)} className="text-red-600 hover:text-red-800"><X size={13} /></button>
                 )}
               </div>
             ))}
@@ -288,15 +290,15 @@ function ViewPerformanceWarnings({ onBack }) {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">View Performance Warnings</h1>
             <p className="text-lg text-gray-600">View and manage all performance warnings</p>
           </div>
-          <button onClick={onBack} className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors">
-            ← Back
+          <button onClick={onBack} className="flex items-center gap-2 text-gray-600 hover:text-blue-700 transition text-sm font-medium">
+            <FaArrowLeft size={13} /> Back
           </button>
         </div>
       )}
 
       <div className="mb-4 flex justify-end">
         <button onClick={fetchWarnings} className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors">
-          🔄 Refresh
+          <RefreshCw size={14} className="inline mr-1.5" /> Refresh
         </button>
       </div>
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import DataTable from "react-data-table-component";
 import { toast } from "react-toastify";
+import { Check, X, Pencil, CheckCircle } from "lucide-react";
 import API_BASE from "../config";
 
 const tableCustomStyles = {
@@ -24,6 +25,14 @@ const StatusBadge = ({ statusText }) => {
       {status.charAt(0).toUpperCase() + status.slice(1)}
     </span>
   );
+};
+
+const isFutureOrToday = (dateStr) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const d = new Date(dateStr);
+  d.setHours(0, 0, 0, 0);
+  return d >= today;
 };
 
 function ManageLeaveRequests() {
@@ -69,7 +78,7 @@ function ManageLeaveRequests() {
       setLeaveRequests((prev) =>
         prev.map((req) =>
           req.id === requestId
-            ? { ...req, status_text: status.charAt(0).toUpperCase() + status.slice(1), status }
+            ? { ...req, status_text: status.charAt(0).toUpperCase() + status.slice(1), status, reviewed_by: reviewerName }
             : req
         )
       );
@@ -103,10 +112,7 @@ function ManageLeaveRequests() {
       name: "Employee",
       selector: (row) => row.employee_name,
       cell: (row) => (
-        <div>
-          <div className="text-sm font-medium text-gray-900">{row.employee_name}</div>
-          <div className="text-xs text-gray-500">ID: {row.employee_id}</div>
-        </div>
+        <div className="text-sm font-medium text-gray-900">{row.employee_name}</div>
       ),
       sortable: true,
       minWidth: "140px",
@@ -122,7 +128,7 @@ function ManageLeaveRequests() {
       name: "Days",
       selector: (row) => row.number_of_days,
       sortable: true,
-      width: "70px",
+      width: "120px",
     },
     {
       name: "Description",
@@ -139,62 +145,78 @@ function ManageLeaveRequests() {
       selector: (row) => row.status_text,
       cell: (row) => <StatusBadge statusText={row.status_text} />,
       sortable: true,
-      width: "120px",
+      width: "150px",
     },
     {
       name: "Actions",
-      cell: (row) =>
-        editingRequest?.id === row.id ? (
-          <div className="flex flex-col gap-1.5">
+      cell: (row) => {
+        const status = (row.status_text || "").toLowerCase();
+        const canEdit = isFutureOrToday(row.from_date);
+
+        if (editingRequest?.id === row.id) {
+          return (
+            <div className="flex flex-col gap-1.5 py-1">
+              <div className="flex gap-1.5">
+                <button
+                  onClick={() => handleStatusUpdate(row.id, "approved")}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium bg-green-600 text-white hover:bg-green-700 transition-colors"
+                >
+                  <Check size={11} /> Approve
+                </button>
+                <button
+                  onClick={() => handleStatusUpdate(row.id, "declined")}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium bg-red-600 text-white hover:bg-red-700 transition-colors"
+                >
+                  <X size={11} /> Decline
+                </button>
+              </div>
+              <button
+                onClick={() => setEditingRequest(null)}
+                className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <X size={10} /> Cancel
+              </button>
+            </div>
+          );
+        }
+
+        if (status === "requested") {
+          return (
             <div className="flex gap-1.5">
               <button
                 onClick={() => handleStatusUpdate(row.id, "approved")}
-                className="px-2.5 py-1 rounded text-xs font-medium bg-green-600 text-white hover:bg-green-700 transition-colors"
+                className="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium bg-green-600 text-white hover:bg-green-700 transition-colors"
               >
-                Approve
+                <Check size={11} /> Approve
               </button>
               <button
                 onClick={() => handleStatusUpdate(row.id, "declined")}
-                className="px-2.5 py-1 rounded text-xs font-medium bg-red-600 text-white hover:bg-red-700 transition-colors"
+                className="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium bg-red-600 text-white hover:bg-red-700 transition-colors"
               >
-                Decline
+                <X size={11} /> Decline
               </button>
             </div>
-            <button
-              onClick={() => setEditingRequest(null)}
-              className="text-xs text-gray-500 hover:text-gray-700 underline text-left"
-            >
-              Cancel
-            </button>
+          );
+        }
+
+        return (
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full whitespace-nowrap">
+              <CheckCircle size={11} /> Reviewed
+            </span>
+            {canEdit && (
+              <button
+                onClick={() => setEditingRequest({ id: row.id, currentStatus: status })}
+                className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-primary-600 border border-primary-200 hover:bg-primary-50 transition-colors"
+              >
+                <Pencil size={11} /> Edit
+              </button>
+            )}
           </div>
-        ) : (row.status_text || "").toLowerCase() === "requested" ? (
-          <div className="flex gap-1.5">
-            <button
-              onClick={() => handleStatusUpdate(row.id, "approved")}
-              className="px-2.5 py-1 rounded text-xs font-medium bg-green-600 text-white hover:bg-green-700 transition-colors"
-            >
-              Approve
-            </button>
-            <button
-              onClick={() => handleStatusUpdate(row.id, "declined")}
-              className="px-2.5 py-1 rounded text-xs font-medium bg-red-600 text-white hover:bg-red-700 transition-colors"
-            >
-              Decline
-            </button>
-          </div>
-        ) : (
-          <div className="flex gap-2 items-center">
-            <span className="text-xs text-gray-500">Reviewed</span>
-            <button
-              onClick={() => setEditingRequest({ id: row.id, currentStatus: (row.status_text || "").toLowerCase() })}
-              className="text-xs text-primary-600 hover:text-primary-800 underline"
-            >
-              Edit
-            </button>
-          </div>
-        ),
+        );
+      },
       ignoreRowClick: true,
-      minWidth: "140px",
+      minWidth: "180px",
     },
   ];
 

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import DataTable from "react-data-table-component";
 import DownloadPayrollPDF from "../components/DownloadPayrollPDF";
+import { FaArrowLeft } from "react-icons/fa";
 import API_BASE from "../config";
 
 const tableCustomStyles = {
@@ -126,22 +127,23 @@ export default function EmployeePayrolls() {
 
   return (
     <div className="p-4 sm:p-6">
-      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
-        <div className="min-w-0">
+      <header className="mb-6">
+        <div className="flex items-center justify-between gap-3 mb-2">
+          <button
+            onClick={() => navigate("/welcome?view=employees")}
+            className="flex items-center gap-2 text-gray-600 hover:text-blue-700 transition text-sm font-medium"
+          >
+            <FaArrowLeft size={13} /> Back
+          </button>
           <h1 className="text-xl font-bold text-blue-700 truncate">Published Payrolls</h1>
-          <p className="text-sm text-gray-500">Employee ID: {id}</p>
-          {employeeData && (
-            <p className="text-sm text-gray-600 truncate">
-              {employeeData.first_name} {employeeData.last_name} — {employeeData.designation}
-            </p>
-          )}
+          <div className="w-16" />
         </div>
-        <button
-          onClick={() => navigate("/welcome?view=employees")}
-          className="bg-primary-600 text-white px-6 py-2 rounded hover:bg-primary-700 transition-colors"
-        >
-          Back
-        </button>
+        <p className="text-sm text-gray-500">Employee ID: {id}</p>
+        {employeeData && (
+          <p className="text-sm text-gray-600 truncate">
+            {employeeData.first_name} {employeeData.last_name} — {employeeData.designation}
+          </p>
+        )}
       </header>
 
       {error && (
