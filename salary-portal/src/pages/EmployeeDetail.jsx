@@ -1,7 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import DataTable from "react-data-table-component";
+import { FaArrowLeft, FaEdit, FaMoneyBillWave, FaCalendarAlt } from "react-icons/fa";
 import API_BASE from "../config";
+
+const tableCustomStyles = {
+  headRow: { style: { backgroundColor: "#eff6ff", borderBottom: "2px solid #bfdbfe" } },
+  headCells: { style: { color: "#374151", fontWeight: "600", fontSize: "13px" } },
+  rows: { style: { "&:hover": { backgroundColor: "#f0f9ff" } } },
+  pagination: { style: { borderTop: "1px solid #e2e8f0", backgroundColor: "#f8fafc" } },
+};
 
 const MONTHS = [
   "January","February","March","April","May","June",
@@ -78,9 +87,9 @@ export default function EmployeeDetail() {
           <h1 className="text-xl sm:text-2xl font-bold text-blue-700 truncate">Employee Details</h1>
           <button
             onClick={() => navigate("/welcome?view=employees")}
-            className="bg-primary-600 text-white px-3 py-2 rounded hover:bg-primary-700 whitespace-nowrap shrink-0"
+            className="flex items-center gap-2 text-gray-600 hover:text-blue-700 transition text-sm font-medium"
           >
-            Back
+            <FaArrowLeft size={13} /> Back
           </button>
         </div>
           </header>
@@ -110,7 +119,6 @@ export default function EmployeeDetail() {
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-4 mt-5 text-sm">
                   {[
-                    { label: "Employee ID",  value: employee.employee_id },
                     { label: "Email",        value: employee.email_address },
                     { label: "Joining Date", value: fmtJoining(employee.joining_date) },
                     { label: "City",         value: employee.city || "—" },
@@ -129,21 +137,21 @@ export default function EmployeeDetail() {
                 <div className="flex gap-3 mt-5 flex-wrap">
                   <button
                     onClick={() => navigate(`/edit-employee/${employee.employee_id}`)}
-                    className="bg-primary-600 text-white px-4 py-2 rounded text-sm font-semibold hover:bg-primary-700"
+                    className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded text-sm font-semibold hover:bg-primary-700"
                   >
-                    Edit
+                    <FaEdit size={13} /> Edit
                   </button>
                   <button
                     onClick={() => navigate(`/employee/${employee.employee_id}/payrolls`)}
-                    className="bg-indigo-600 text-white px-4 py-2 rounded text-sm font-semibold hover:bg-indigo-700"
+                    className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded text-sm font-semibold hover:bg-primary-700"
                   >
-                    View Payrolls
+                    <FaMoneyBillWave size={13} /> View Payrolls
                   </button>
                   <button
                     onClick={() => navigate(`/employee/${employee.employee_id}/leaves`)}
-                    className="bg-green-600 text-white px-4 py-2 rounded text-sm font-semibold hover:bg-green-700"
+                    className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded text-sm font-semibold hover:bg-primary-700"
                   >
-                    View Leaves
+                    <FaCalendarAlt size={13} /> View Leaves
                   </button>
                 </div>
               </div>
@@ -175,36 +183,43 @@ export default function EmployeeDetail() {
                   <p className="text-center text-gray-400 py-6">Loading attendance...</p>
                 ) : attError ? (
                   <p className="text-center text-red-500 py-6 text-sm">{attError}</p>
-                ) : attendance.length === 0 ? (
-                  <p className="text-center text-gray-400 py-6">No attendance records for this month.</p>
                 ) : (
                   <>
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full text-sm">
-                        <thead className="bg-blue-100 text-gray-700">
-                          <tr>
-                            <th className="px-4 py-3 text-left">Date</th>
-                            <th className="px-4 py-3 text-center">Clock In</th>
-                            <th className="px-4 py-3 text-center">Clock Out</th>
-                            <th className="px-4 py-3 text-center">Hours Worked</th>
-                          </tr>
-                        </thead>
-                        <tbody className="text-gray-800">
-                          {attendance.map((r) => (
-                            <tr key={r.date} className="border-t hover:bg-gray-50">
-                              <td className="px-4 py-3 font-medium">
-                                {new Date(r.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
-                              </td>
-                              <td className="px-4 py-3 text-center text-green-700 font-semibold">{r.clock_in ?? "—"}</td>
-                              <td className="px-4 py-3 text-center text-red-600 font-semibold">{r.clock_out ?? "—"}</td>
-                              <td className="px-4 py-3 text-center text-indigo-700 font-bold">{r.hours > 0 ? `${r.hours}h` : "—"}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                    <p className="text-right mt-3 text-sm font-semibold text-gray-600">
-                      Total this month: <span className="text-indigo-700 text-base">{totalHours}h</span>
+                    <DataTable
+                      columns={[
+                        {
+                          name: "Date",
+                          selector: (r) => r.date,
+                          cell: (r) => new Date(r.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }),
+                          sortable: true,
+                        },
+                        {
+                          name: "Clock In",
+                          selector: (r) => r.clock_in ?? "—",
+                          cell: (r) => <span className="text-green-700 font-semibold">{r.clock_in ?? "—"}</span>,
+                          sortable: true,
+                        },
+                        {
+                          name: "Clock Out",
+                          selector: (r) => r.clock_out ?? "—",
+                          cell: (r) => <span className="text-red-600 font-semibold">{r.clock_out ?? "—"}</span>,
+                          sortable: true,
+                        },
+                        {
+                          name: "Hours Worked",
+                          selector: (r) => r.hours,
+                          cell: (r) => <span className="text-blue-700 font-bold">{r.hours > 0 ? `${r.hours}h` : "—"}</span>,
+                          sortable: true,
+                        },
+                      ]}
+                      data={attendance}
+                      customStyles={tableCustomStyles}
+                      pagination
+                      paginationRowsPerPageOptions={[10, 25, 31]}
+                      noDataComponent={<div className="text-center py-6 text-gray-400">No attendance records for this month.</div>}
+                    />
+                    <p className="text-right mt-2 text-sm font-semibold text-gray-600">
+                      Total this month: <span className="text-blue-700 text-base">{totalHours}h</span>
                     </p>
                   </>
                 )}

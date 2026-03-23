@@ -181,7 +181,7 @@ export default function Welcome() {
     {
       name: "Sr.No",
       cell: (_, i) => i + 1,
-      width: "70px",
+      width: "100px",
     },
     {
       name: "Name",
@@ -476,7 +476,7 @@ export default function Welcome() {
                     {role === "admin" && (
                       <button
                         onClick={() => navigate("/add-hr")}
-                        className="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 whitespace-nowrap"
+                        className="border border-primary-600 text-primary-600 bg-white px-3 py-2 rounded hover:bg-primary-50 whitespace-nowrap font-medium"
                       >
                         + Add HR
                       </button>
@@ -484,7 +484,7 @@ export default function Welcome() {
                     {["admin", "hr"].includes(role) && (
                       <button
                         onClick={() => navigate("/add-employee")}
-                        className="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 whitespace-nowrap"
+                        className="bg-primary-600 text-white px-3 py-2 rounded hover:bg-primary-700 whitespace-nowrap font-medium"
                       >
                         + Add Employee
                       </button>
