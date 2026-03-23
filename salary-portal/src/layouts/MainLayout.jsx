@@ -10,7 +10,10 @@ export default function MainLayout() {
   const [notificationCount, setNotificationCount] = useState(0);
   const navigate = useNavigate();
 
-  const name        = localStorage.getItem("name")        || "User";
+  const rawName     = localStorage.getItem("name")        || "";
+  const name        = rawName
+    ? rawName.replace(/\b\w/g, (c) => c.toUpperCase())
+    : "User";
   const role        = localStorage.getItem("role")        || "";
   const designation = localStorage.getItem("designation") || "";
 
@@ -61,7 +64,7 @@ export default function MainLayout() {
               {!isHR && (
                 <button
                   type="button"
-                  onClick={() => setIsSidebarOpen(true)}
+                  onClick={() => navigate("/home?section=notifications")}
                   className="relative w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors"
                   aria-label="Notifications"
                 >
@@ -77,9 +80,9 @@ export default function MainLayout() {
               )}
 
               {/* User name + designation */}
-              <div className="text-right hidden sm:block leading-tight">
+              <div className="text-right leading-tight">
                 <div className="text-sm font-semibold text-gray-800">{name}</div>
-                {designation && <div className="text-xs text-gray-500">{designation}</div>}
+                {designation && <div className="text-xs text-gray-500 hidden sm:block">{designation}</div>}
               </div>
 
               {/* Role badge */}
@@ -147,7 +150,7 @@ export default function MainLayout() {
           )}
 
           {/* ── PAGE CONTENT ── */}
-          <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden">
+          <main className="flex-1 min-w-0 overflow-y-auto">
             <Outlet context={{ isSidebarOpen, setIsSidebarOpen, setNotificationCount }} />
           </main>
 

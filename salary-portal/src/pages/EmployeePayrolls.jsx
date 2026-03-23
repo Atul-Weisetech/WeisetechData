@@ -1,8 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import DataTable from "react-data-table-component";
 import DownloadPayrollPDF from "../components/DownloadPayrollPDF";
 import API_BASE from "../config";
+
+const tableCustomStyles = {
+  headRow: { style: { backgroundColor: "#eff6ff", borderBottom: "2px solid #bfdbfe" } },
+  headCells: { style: { color: "#374151", fontWeight: "600", fontSize: "13px" } },
+  rows: { style: { "&:hover": { backgroundColor: "#f0f9ff" } } },
+  pagination: { style: { borderTop: "1px solid #e2e8f0", backgroundColor: "#f8fafc" } },
+};
 
 export default function EmployeePayrolls() {
   const navigate = useNavigate();
@@ -18,43 +26,26 @@ export default function EmployeePayrolls() {
       setLoading(true);
       setError("");
       try {
-        // Fetch payrolls
         const payrollRes = await axios.get(`${API_BASE}/api/payrolls/employee/${id}`);
-        console.log('Payrolls data:', payrollRes.data);
         setPayrolls(payrollRes.data || []);
-        
-        // Fetch employee data
+
         const employeeRes = await axios.get(`${API_BASE}/api/employees/${id}`);
-        console.log('Employee data:', employeeRes.data);
         setEmployeeData(employeeRes.data);
-        
-        // Fetch breakdown data for each payroll - FIXED: Use the correct endpoint
-        if (payrollRes.data && payrollRes.data.length > 0) {
-          const breakdownPromises = payrollRes.data.map(payroll => 
-            axios.get(`${API_BASE}/api/payrolls/${payroll.id}/breakdown`)
-              .then(res => {
-                console.log(`Breakdown for payroll ${payroll.id}:`, res.data);
-                return { payrollId: payroll.id, data: res.data };
-              })
-              .catch(error => {
-                console.warn(`Failed to fetch breakdown for payroll ${payroll.id}:`, error.message);
-                return { payrollId: payroll.id, data: [] };
-              })
+
+        if (payrollRes.data?.length > 0) {
+          const results = await Promise.all(
+            payrollRes.data.map((p) =>
+              axios
+                .get(`${API_BASE}/api/payrolls/${p.id}/breakdown`)
+                .then((res) => ({ payrollId: p.id, data: res.data }))
+                .catch(() => ({ payrollId: p.id, data: [] }))
+            )
           );
-          
-          const breakdownResults = await Promise.all(breakdownPromises);
-          const breakdownMap = {};
-          
-          breakdownResults.forEach(result => {
-            breakdownMap[result.payrollId] = result.data;
-          });
-          
-          console.log('Breakdown map:', breakdownMap);
-          setBreakdownData(breakdownMap);
+          const map = {};
+          results.forEach((r) => { map[r.payrollId] = r.data; });
+          setBreakdownData(map);
         }
-        
       } catch (e) {
-        console.error('Error loading data:', e);
         setError(e?.response?.data?.message || "Failed to fetch data");
       } finally {
         setLoading(false);
@@ -65,40 +56,73 @@ export default function EmployeePayrolls() {
 
   const formatCurrency = (val) => {
     const num = Number(val);
-    if (Number.isNaN(num)) return String(val ?? "");
-    return `₹${num.toFixed(2)}`;
+    return Number.isNaN(num) ? String(val ?? "") : `₹${num.toFixed(2)}`;
   };
 
-  // Prepare payroll data for PDF generation
-  const preparePayrollData = (payroll) => {
-    const breakdown = breakdownData[payroll.id] || [];
-    console.log(`Preparing payroll data for ${payroll.id}:`, { breakdown });
-    
-    return {
-      payroll_amount: payroll.payroll_amount,
-      pay_month: payroll.pay_month,
-      payroll_date: payroll.payroll_date,
-      mode_of_payment: payroll.mode_of_payment,
-      breakdown: breakdown
-    };
-  };
+  const preparePayrollData = (payroll) => ({
+    payroll_amount: payroll.payroll_amount,
+    pay_month: payroll.pay_month,
+    payroll_date: payroll.payroll_date,
+    mode_of_payment: payroll.mode_of_payment,
+    breakdown: breakdownData[payroll.id] || [],
+  });
 
-  // Prepare employee data for PDF generation
   const prepareEmployeeData = () => {
-    if (!employeeData) return {
-      name: `Employee ${id}`,
-      email_address: "N/A",
-      designation: "Employee"
-    };
-    
-    const fullName = `${employeeData.first_name || ''} ${employeeData.last_name || ''}`.trim();
-    
+    if (!employeeData) return { name: `Employee ${id}`, email_address: "N/A", designation: "Employee" };
     return {
-      name: fullName || `Employee ${id}`,
+      name: `${employeeData.first_name || ""} ${employeeData.last_name || ""}`.trim() || `Employee ${id}`,
       email_address: employeeData.email_address || "N/A",
-      designation: employeeData.designation || "Employee"
+      designation: employeeData.designation || "Employee",
     };
   };
+
+  const columns = [
+    {
+      name: "Sr.No",
+      cell: (_, i) => i + 1,
+      width: "70px",
+    },
+    {
+      name: "Amount",
+      selector: (row) => parseFloat(row.payroll_amount) || 0,
+      cell: (row) => formatCurrency(row.payroll_amount),
+      sortable: true,
+    },
+    {
+      name: "Month",
+      selector: (row) => row.pay_month,
+      sortable: true,
+    },
+    {
+      name: "Payroll Date",
+      selector: (row) => row.payroll_date,
+      cell: (row) =>
+        new Date(row.payroll_date).toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        }),
+      sortable: true,
+    },
+    {
+      name: "Payment Mode",
+      selector: (row) => row.mode_of_payment,
+      sortable: true,
+    },
+    {
+      name: "Download",
+      cell: (row) => (
+        <DownloadPayrollPDF
+          payrollData={preparePayrollData(row)}
+          employeeData={prepareEmployeeData()}
+          companyName="Weisetech Developers"
+          location="Ganesh Glory 11, E-620, Gota, Ahmedabad, Gujarat 382470"
+          className="text-sm px-3 py-1"
+        />
+      ),
+      ignoreRowClick: true,
+    },
+  ];
 
   return (
     <div className="p-4 sm:p-6">
@@ -108,75 +132,40 @@ export default function EmployeePayrolls() {
           <p className="text-sm text-gray-500">Employee ID: {id}</p>
           {employeeData && (
             <p className="text-sm text-gray-600 truncate">
-              {employeeData.first_name} {employeeData.last_name} -{" "}
-              {employeeData.designation}
+              {employeeData.first_name} {employeeData.last_name} — {employeeData.designation}
             </p>
           )}
         </div>
         <button
           onClick={() => navigate("/welcome?view=employees")}
-          className="bg-primary-600 text-white px-6 py-2 rounded hover:bg-primary-700"
+          className="bg-primary-600 text-white px-6 py-2 rounded hover:bg-primary-700 transition-colors"
         >
           Back
         </button>
       </header>
 
-        {error && (
-          <div className="mb-4 px-4 py-2 rounded border border-red-200 bg-red-50 text-red-700">
-            {error}
-          </div>
-        )}
+      {error && (
+        <div className="mb-4 px-4 py-2 rounded border border-red-200 bg-red-50 text-red-700">
+          {error}
+        </div>
+      )}
 
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          </div>
-        ) : payrolls.length === 0 ? (
-          <div className="text-center text-gray-500">No published payrolls found for this employee.</div>
-        ) : (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
-                <thead className="bg-blue-100 text-gray-700">
-                  <tr>
-                    <th className="px-4 py-3">#</th>
-                    <th className="px-4 py-3">Amount</th>
-                    <th className="px-4 py-3">Month</th>
-                    <th className="px-4 py-3">Payroll Date</th>
-                    <th className="px-4 py-3">Payment Mode</th>
-                    <th className="px-4 py-3">Download</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {payrolls.map((p, idx) => (
-                    <tr key={p.id} className="border-t hover:bg-gray-50">
-                      <td className="px-4 py-2">{idx + 1}</td>
-                      <td className="px-4 py-2">{formatCurrency(p.payroll_amount)}</td>
-                      <td className="px-4 py-2">{p.pay_month}</td>
-                      <td className="px-4 py-2">
-                        {new Date(p.payroll_date).toLocaleDateString("en-IN", {
-                          day: "2-digit",
-                          month: "long",
-                          year: "numeric"
-                        })}
-                      </td>
-                      <td className="px-4 py-2">{p.mode_of_payment}</td>
-                      <td className="px-4 py-2">
-                        <DownloadPayrollPDF
-                          payrollData={preparePayrollData(p)}
-                          employeeData={prepareEmployeeData()}
-                          companyName="Weisetech Developers"
-                          location="Ganesh Glory 11, E-620, Gota, Ahmedabad, Gujarat 382470"
-                          className="text-sm px-3 py-1"
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <DataTable
+          columns={columns}
+          data={payrolls}
+          progressPending={loading}
+          pagination
+          paginationRowsPerPageOptions={[5, 10, 25, 50]}
+          defaultSortFieldId={3}
+          customStyles={tableCustomStyles}
+          noDataComponent={
+            <div className="text-center py-12 text-gray-400">
+              No published payrolls found for this employee.
             </div>
-          </div>
-        )}
+          }
+        />
+      </div>
     </div>
   );
 }

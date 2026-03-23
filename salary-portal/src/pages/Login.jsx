@@ -62,8 +62,11 @@ export default function Login() {
       const employeeName = res.data?.employee
         ? `${res.data.employee.first_name || ""} ${res.data.employee.last_name || ""}`.trim()
         : "";
+      const userName = (res.data?.user?.first_name || res.data?.user?.last_name)
+        ? `${res.data.user.first_name || ""} ${res.data.user.last_name || ""}`.trim()
+        : "";
       const fallbackName =
-        employeeName || res.data?.user?.username || res.data?.user?.email_address || "";
+        employeeName || userName || res.data?.user?.username || res.data?.user?.email_address || "";
       if (employeeId) localStorage.setItem("id", String(employeeId));
       if (fallbackName) localStorage.setItem("name", fallbackName);
       const designation = res.data?.employee?.designation || res.data?.user?.designation || "";

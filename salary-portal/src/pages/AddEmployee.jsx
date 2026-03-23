@@ -3,7 +3,7 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaArrowLeft } from "react-icons/fa";
 import { toast } from "react-toastify";
 import API_BASE from "../config";
 
@@ -69,76 +69,111 @@ export default function AddEmployee() {
     },
   });
 
+  const fullWidthFields = new Set(["first_name", "last_name", "email_address", "password", "designation", "address_line_1", "address_line_2"]);
+
   return (
-    <div className="max-w-xl mx-auto mt-6 sm:mt-10 bg-white p-4 sm:p-6 rounded shadow-md relative">
-      <div className="flex justify-end mb-2">
-        <button
-          type="button"
-          onClick={() => navigate("/welcome")}
-          className="bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 transition text-sm"
-        >
-          Back
-        </button>
-      </div>
+    <div className="w-full bg-white p-4 sm:p-8">
+        <div className="flex items-center justify-between mb-6">
+          <button
+            type="button"
+            onClick={() => navigate("/welcome")}
+            className="flex items-center gap-2 text-gray-600 hover:text-blue-700 transition text-sm font-medium"
+          >
+            <FaArrowLeft size={13} /> Back
+          </button>
+          <h2 className="text-xl font-semibold text-blue-700">Add Employee</h2>
+          <div className="w-16" />
+        </div>
 
-      <h2 className="text-xl font-semibold mb-4 text-blue-700 text-center">
-        Add Employee
-      </h2>
+        <form onSubmit={formik.handleSubmit}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Object.keys(formik.initialValues).map((field) => {
+          const placeholderMap = {
+            first_name: "Enter first name",
+            last_name: "Enter last name",
+            email_address: "Enter email address",
+            password: "Min 8 chars, upper, lower, number, special",
+            designation: "Enter designation (e.g. Software Engineer)",
+            city: "Enter city",
+            state: "Enter state",
+            postal_code: "Enter postal code",
+            salary: "Enter monthly salary (e.g. 50000)",
+            deduction: "Enter deduction amount (e.g. 2000)",
+            joining_date: "",
+            address_line_1: "Enter address line 1",
+            address_line_2: "Enter address line 2 (optional)",
+          };
+          const labelMap = {
+            first_name: "First Name",
+            last_name: "Last Name",
+            email_address: "Email Address",
+            password: "Password",
+            designation: "Designation",
+            city: "City",
+            state: "State",
+            postal_code: "Postal Code",
+            salary: "Salary",
+            deduction: "Deduction",
+            joining_date: "Joining Date",
+            address_line_1: "Address Line 1",
+            address_line_2: "Address Line 2",
+          };
+          return (
+            <div key={field} className={fullWidthFields.has(field) ? "sm:col-span-2 lg:col-span-3" : ""}>
+              <label className="block mb-1 font-medium text-gray-700">
+                {labelMap[field] || field.replace(/_/g, " ")}
+              </label>
 
-      <form onSubmit={formik.handleSubmit}>
-        {Object.keys(formik.initialValues).map((field) => (
-          <div key={field} className="mb-4">
-            <label className="block mb-1 font-medium text-gray-700">
-              {field.replace(/_/g, " ").toUpperCase()}
-            </label>
-
-            {field === "password" ? (
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  placeholder="Password"
-                  value={formik.values.password}
-                  onChange={formik.handleChange}
-                  className="w-full border px-3 py-2 rounded pr-10 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                />
-                <span
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-500 cursor-pointer"
-                >
-                  {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
-                </span>
-                {formik.touched.password && formik.errors.password && (
-                  <p className="text-red-500 text-sm mt-1">{formik.errors.password}</p>
-                )}
-                {formik.values.password && !formik.errors.password && (
-                  <p className="text-green-600 text-xs mt-1">Strong password</p>
-                )}
-              </div>
-            ) : (
-              <>
-                <input
-                  type={field.includes("date") ? "date" : "text"}
-                  name={field}
-                  value={formik.values[field]}
-                  onChange={formik.handleChange}
-                  className="w-full border px-3 py-2 rounded focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                />
-                {formik.touched[field] && formik.errors[field] && (
-                  <p className="text-red-500 text-sm mt-1">{formik.errors[field]}</p>
-                )}
-              </>
-            )}
+              {field === "password" ? (
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    placeholder={placeholderMap.password}
+                    value={formik.values.password}
+                    onChange={formik.handleChange}
+                    className="w-full border px-3 py-2 rounded pr-10 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                  />
+                  <span
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-500 cursor-pointer"
+                  >
+                    {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+                  </span>
+                  {formik.touched.password && formik.errors.password && (
+                    <p className="text-red-500 text-sm mt-1">{formik.errors.password}</p>
+                  )}
+                  {formik.values.password && !formik.errors.password && (
+                    <p className="text-green-600 text-xs mt-1">Strong password ✓</p>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <input
+                    type={field.includes("date") ? "date" : field === "salary" || field === "deduction" ? "number" : "text"}
+                    name={field}
+                    placeholder={placeholderMap[field] || ""}
+                    value={formik.values[field]}
+                    onChange={formik.handleChange}
+                    className="w-full border px-3 py-2 rounded focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                  />
+                  {formik.touched[field] && formik.errors[field] && (
+                    <p className="text-red-500 text-sm mt-1">{formik.errors[field]}</p>
+                  )}
+                </>
+              )}
+            </div>
+          );
+          })}
           </div>
-        ))}
 
-        <button
-          type="submit"
-          className="bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 w-full mt-4"
-        >
-          Add Employee
-        </button>
-      </form>
-    </div>
+          <button
+            type="submit"
+            className="bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 w-full mt-6"
+          >
+            Add Employee
+          </button>
+        </form>
+      </div>
   );
 }

@@ -98,43 +98,42 @@ export default function EditEmployee() {
 
   return (
     <div className="max-w-xl mx-auto mt-6 sm:mt-10 bg-white p-4 sm:p-6 rounded shadow-md">
-      <div className="flex items-center justify-between gap-3 mb-4">
-        <h2 className="text-xl font-semibold">Edit Employee</h2>
-        <button
-          type="button"
-          onClick={() => navigate("/welcome")}
-          className="bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 text-sm"
-        >
-          Back
-        </button>
-      </div>
+      <h2 className="text-xl font-semibold mb-4 text-blue-700 text-center">Edit Employee</h2>
 
       <form onSubmit={formik.handleSubmit}>
         {Object.keys(formik.values).map((field) => (
           <div key={field} className="mb-4">
-            <label className="block mb-1 font-medium">
-              {field.replace("_", " ").toUpperCase()}
+            <label className="block mb-1 font-medium text-gray-700">
+              {field.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
             </label>
             <input
               type={field.includes("date") ? "date" : "text"}
               name={field}
               value={formik.values[field]}
               onChange={formik.handleChange}
-              className="w-full border px-3 py-2 rounded"
+              placeholder={field === "joining_date" ? "" : `Enter ${field.replace(/_/g, " ")}`}
+              className="w-full border px-3 py-2 rounded focus:ring-2 focus:ring-blue-400 focus:outline-none"
             />
             {formik.touched[field] && formik.errors[field] && (
-              <p className="text-red-500 text-sm mt-1">
-                {formik.errors[field]}
-              </p>
+              <p className="text-red-500 text-sm mt-1">{formik.errors[field]}</p>
             )}
           </div>
         ))}
-        <button
-          type="submit"
-          className="bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700"
-        >
-          Save
-        </button>
+        <div className="flex gap-3 mt-4">
+          <button
+            type="submit"
+            className="bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 transition-colors"
+          >
+            Save
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/welcome")}
+            className="bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 transition-colors"
+          >
+            Back
+          </button>
+        </div>
       </form>
     </div>
   );

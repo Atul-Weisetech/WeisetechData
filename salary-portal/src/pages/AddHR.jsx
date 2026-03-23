@@ -39,15 +39,6 @@ export default function AddHR() {
 
   return (
     <div className="max-w-md mx-auto mt-6 sm:mt-16 bg-white p-4 sm:p-6 rounded shadow relative">
-      <div className="flex justify-end mb-2">
-        <button
-          type="button"
-          onClick={() => navigate("/welcome")}
-          className="bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 transition text-sm"
-        >
-          Back
-        </button>
-      </div>
       <h2 className="text-xl font-semibold mb-4 text-center text-blue-700">
         Add New HR
       </h2>
@@ -122,13 +113,22 @@ export default function AddHR() {
           )}
         </div>
 
-        {/* Submit Button */}
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
-        >
-          Add HR
-        </button>
+        {/* Submit + Back Buttons */}
+        <div className="flex gap-3">
+          <button
+            type="submit"
+            className="flex-1 bg-primary-600 text-white py-2 rounded hover:bg-primary-700 transition"
+          >
+            Add HR
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/welcome")}
+            className="flex-1 bg-primary-600 text-white py-2 rounded hover:bg-primary-700 transition"
+          >
+            Back
+          </button>
+        </div>
       </form>
     </div>
   );

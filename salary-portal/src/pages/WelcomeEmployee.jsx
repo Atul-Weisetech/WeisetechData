@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, useSearchParams } from "react-router-dom";
 import {
   FaTachometerAlt,
   FaMoneyBillWave,
@@ -15,6 +15,7 @@ import axios from "axios";
 import { ClimbingBoxLoader } from "react-spinners";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import DataTable from "react-data-table-component";
 import API_BASE from "../config";
 
 function WelcomeEmployee() {
@@ -40,6 +41,13 @@ function WelcomeEmployee() {
   const { isSidebarOpen = false, setIsSidebarOpen = () => {}, setNotificationCount = () => {} } = outletCtx;
 
   const employeeId = localStorage.getItem("id");
+
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const section = searchParams.get("section");
+    if (section) setActiveSection(section);
+  }, [searchParams]);
 
   const lastSeenStorageKey = useMemo(
     () => (employeeId ? `notifications_last_seen_${employeeId}` : null),
@@ -674,7 +682,7 @@ function WelcomeEmployee() {
                       onClick={() => setLeaveFilter(f)}
                       className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
                         leaveFilter === f
-                          ? "bg-indigo-600 text-white"
+                          ? "bg-blue-700 text-white"
                           : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                       }`}
                     >
@@ -684,46 +692,65 @@ function WelcomeEmployee() {
                 </div>
               </div>
 
-              {myLeaves.length === 0 ? (
-                <div className="text-center py-10 text-gray-500">
-                  <p className="text-lg">No leave requests found.</p>
-                </div>
-              ) : filteredLeaves.length === 0 ? (
-                <div className="text-center py-10 text-gray-500">
-                  <p>No {leaveFilter} leave requests.</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-sm">
-                    <thead className="bg-gray-50 text-gray-600 uppercase text-xs">
-                      <tr>
-                        <th className="px-4 py-3 text-left">#</th>
-                        <th className="px-4 py-3 text-left">From</th>
-                        <th className="px-4 py-3 text-left">To</th>
-                        <th className="px-4 py-3 text-left">Days</th>
-                        <th className="px-4 py-3 text-left">Reason</th>
-                        <th className="px-4 py-3 text-left">Status</th>
-                        <th className="px-4 py-3 text-left">Applied On</th>
-                        <th className="px-4 py-3 text-left">Reviewed By</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {filteredLeaves.map((req, idx) => (
-                        <tr key={req.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-3 text-gray-500">{idx + 1}</td>
-                          <td className="px-4 py-3 whitespace-nowrap">{req.from_date ? new Date(req.from_date).toLocaleDateString() : "—"}</td>
-                          <td className="px-4 py-3 whitespace-nowrap">{req.to_date ? new Date(req.to_date).toLocaleDateString() : "—"}</td>
-                          <td className="px-4 py-3">{req.number_of_days}</td>
-                          <td className="px-4 py-3 max-w-[180px] truncate" title={req.description}>{req.description || "—"}</td>
-                          <td className="px-4 py-3">{getStatusBadge(req.status_text || req.status)}</td>
-                          <td className="px-4 py-3 whitespace-nowrap">{req.applied_date ? new Date(req.applied_date).toLocaleDateString() : "—"}</td>
-                          <td className="px-4 py-3">{req.reviewed_by || "—"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              <DataTable
+                columns={[
+                  { name: "#", cell: (_, i) => i + 1, width: "60px" },
+                  {
+                    name: "From",
+                    selector: (r) => r.from_date,
+                    cell: (r) => r.from_date ? new Date(r.from_date).toLocaleDateString() : "—",
+                    sortable: true,
+                    minWidth: "110px",
+                  },
+                  {
+                    name: "To",
+                    selector: (r) => r.to_date,
+                    cell: (r) => r.to_date ? new Date(r.to_date).toLocaleDateString() : "—",
+                    sortable: true,
+                    minWidth: "110px",
+                  },
+                  { name: "Days", selector: (r) => r.number_of_days, sortable: true, width: "120px" },
+                  {
+                    name: "Reason",
+                    selector: (r) => r.description,
+                    cell: (r) => (
+                      <span title={r.description} className="block truncate max-w-[180px] text-sm text-gray-700">
+                        {r.description || "—"}
+                      </span>
+                    ),
+                    grow: 2,
+                  },
+                  {
+                    name: "Status",
+                    selector: (r) => r.status_text || r.status,
+                    cell: (r) => getStatusBadge(r.status_text || r.status),
+                    sortable: true,
+                    minWidth: "110px",
+                  },
+                  {
+                    name: "Applied On",
+                    selector: (r) => r.applied_date,
+                    cell: (r) => r.applied_date ? new Date(r.applied_date).toLocaleDateString() : "—",
+                    sortable: true,
+                    minWidth: "110px",
+                  },
+                  { name: "Reviewed By", selector: (r) => r.reviewed_by || "—", sortable: true, minWidth: "120px" },
+                ]}
+                data={filteredLeaves}
+                pagination
+                paginationRowsPerPageOptions={[5, 10, 25]}
+                customStyles={{
+                  headRow: { style: { backgroundColor: "#eff6ff", borderBottom: "2px solid #bfdbfe" } },
+                  headCells: { style: { color: "#374151", fontWeight: "600", fontSize: "13px" } },
+                  rows: { style: { "&:hover": { backgroundColor: "#f0f9ff" } } },
+                  pagination: { style: { borderTop: "1px solid #e2e8f0", backgroundColor: "#f8fafc" } },
+                }}
+                noDataComponent={
+                  <div className="text-center py-10 text-gray-500">
+                    No {leaveFilter === "all" ? "" : leaveFilter} leave requests found.
+                  </div>
+                }
+              />
             </div>
           </div>
         );
@@ -753,7 +780,7 @@ function WelcomeEmployee() {
   };
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-blue-50 flex min-h-full w-full">
+    <div className="flex h-full w-full overflow-hidden bg-gradient-to-br from-gray-50 to-blue-50">
       {/* Mobile Sidebar Drawer */}
       {isSidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
@@ -846,7 +873,7 @@ function WelcomeEmployee() {
         </div>
       )}
 
-      <div className="hidden lg:flex flex-col w-72 bg-white shadow-xl border-r border-slate-200 sticky top-0 self-start h-[calc(100vh-5rem)] overflow-y-auto overflow-x-hidden shrink-0">
+      <div className="hidden lg:flex flex-col w-72 bg-white shadow-xl border-r border-slate-200 h-full overflow-y-auto overflow-x-hidden shrink-0">
           {/* Nav items */}
           <nav className="flex-1 px-2 py-4 overflow-y-auto overflow-x-hidden">
             <ul className="space-y-3">
@@ -877,8 +904,7 @@ function WelcomeEmployee() {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 min-w-0">
-          {/* Reduce padding on small screens */}
+        <div className="flex-1 min-w-0 h-full overflow-y-auto overflow-x-hidden">
           <div className="p-4 sm:p-6 lg:p-0">{renderContent()}</div>
         </div>
 

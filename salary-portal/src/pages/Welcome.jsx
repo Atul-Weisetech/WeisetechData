@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import DataTable from "react-data-table-component";
+import { FaEdit, FaUserSlash, FaMoneyBillWave, FaCalendarAlt, FaEllipsisV } from "react-icons/fa";
 import { toast } from "react-toastify";
 import AddPayrollBreakdown from "./AddPayrollBreakdown";
 import AddPayrollMetaTypes from "./AddPayrollMetaTypes";
@@ -16,6 +18,7 @@ export default function Welcome() {
   const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
 
   const [employees, setEmployees] = useState([]);
+  const [employeesLoading, setEmployeesLoading] = useState(true);
   const [payrolls, setPayrolls] = useState([]);
   const [search, setSearch] = useState("");
   const [searchParams] = useSearchParams();
@@ -51,6 +54,8 @@ export default function Welcome() {
     mode: "",
   });
   const [visibleSalaries, setVisibleSalaries] = useState({});
+  const [visibleDeductions, setVisibleDeductions] = useState({});
+  const [actionDropdown, setActionDropdown] = useState({ id: null, rect: null });
 
   useEffect(() => {
     const email = localStorage.getItem("email");
@@ -74,17 +79,17 @@ export default function Welcome() {
   }, [view]);
 
   const fetchEmployees = () => {
+    setEmployeesLoading(true);
     axios
       .get(`${API_BASE}/api/employees`)
       .then((res) => {
-        console.log("Employees fetched:", res.data);
         setEmployees(res.data || []);
       })
       .catch((err) => {
-        console.error("Error fetching employees:", err);
         toast.error("Failed to fetch employees: " + (err.response?.data?.error || err.message));
         setEmployees([]);
-      });
+      })
+      .finally(() => setEmployeesLoading(false));
   };
 
   const fetchPayrolls = () => {
@@ -149,15 +154,153 @@ export default function Welcome() {
       .toLowerCase()
       .includes(search.toLowerCase())
   );
+
   const canRevealSalary = ["admin", "hr"].includes(role);
- const toggleSalaryVisibility = (id) => {
-  if (!canRevealSalary) return;
-  setVisibleSalaries((prev) => ({
-    // If clicking the same ID that's already visible, hide it
-    // Otherwise, show only the new ID
-    [id]: prev[id] ? false : true
-  }));
-};
+
+  const toggleSalaryVisibility = (id) => {
+    if (!canRevealSalary) return;
+    setVisibleSalaries((prev) => ({ [id]: !prev[id] }));
+  };
+
+  const toggleDeductionVisibility = (id) => {
+    if (!canRevealSalary) return;
+    setVisibleDeductions((prev) => ({ [id]: !prev[id] }));
+  };
+
+  const capitalize = (s) =>
+    s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "";
+
+  const tableCustomStyles = {
+    headRow: { style: { backgroundColor: "#eff6ff", borderBottom: "2px solid #bfdbfe" } },
+    headCells: { style: { color: "#374151", fontWeight: "600", fontSize: "13px" } },
+    rows: { style: { "&:hover": { backgroundColor: "#f0f9ff" } } },
+    pagination: { style: { borderTop: "1px solid #e2e8f0", backgroundColor: "#f8fafc" } },
+  };
+
+  const employeeColumns = [
+    {
+      name: "Sr.No",
+      cell: (_, i) => i + 1,
+      width: "70px",
+    },
+    {
+      name: "Name",
+      selector: (row) => `${row.first_name || ""} ${row.last_name || ""}`.trim().toLowerCase(),
+      cell: (row) => (
+        <button
+          onClick={() => navigate(`/employee/${row.employee_id}`)}
+          className="text-blue-700 hover:underline font-semibold text-left"
+        >
+          {capitalize(row.first_name)} {capitalize(row.last_name)}
+        </button>
+      ),
+      sortable: true,
+      minWidth: "150px",
+      width:"200px",
+    },
+    {
+      name: "Email",
+      selector: (row) => row.email_address,
+      cell: (row) => row.email_address || "—",
+      sortable: true,
+      minWidth: "180px",
+      width:"200px",
+    },
+    {
+      name: "Designation",
+      selector: (row) => row.designation,
+      cell: (row) => row.designation || "—",
+      sortable: true,
+      minWidth: "140px",
+    },
+    {
+      name: "Salary",
+      selector: (row) => parseFloat(row.salary) || 0,
+      cell: (row) =>
+        row.salary != null && row.salary !== "" ? (
+          canRevealSalary ? (
+            <button
+              type="button"
+              onClick={() => toggleSalaryVisibility(row.employee_id)}
+              className="text-blue-700 hover:underline font-medium"
+            >
+              {visibleSalaries[row.employee_id]
+                ? `₹${parseFloat(row.salary).toFixed(2)}`
+                : "*****"}
+            </button>
+          ) : (
+            "*****"
+          )
+        ) : (
+          "—"
+        ),
+      sortable: true,
+      width: "120px",
+    },
+    {
+      name: "Deductions",
+      selector: (row) => parseFloat(row.deduction) || 0,
+      cell: (row) =>
+        row.deduction != null && row.deduction !== "" ? (
+          canRevealSalary ? (
+            <button
+              type="button"
+              onClick={() => toggleDeductionVisibility(row.employee_id)}
+              className="text-blue-700 hover:underline font-medium"
+            >
+              {visibleDeductions[row.employee_id]
+                ? `₹${parseFloat(row.deduction).toFixed(2)}`
+                : "*****"}
+            </button>
+          ) : (
+            "*****"
+          )
+        ) : (
+          "—"
+        ),
+      sortable: true,
+      width: "120px",
+    },
+    {
+      name: "Joining Date",
+      selector: (row) => row.joining_date,
+      cell: (row) =>
+        row.joining_date
+          ? new Date(row.joining_date * 1000).toLocaleDateString("en-IN", {
+              day: "2-digit",
+              month: "long",
+              year: "numeric",
+            })
+          : "—",
+      sortable: true,
+      minWidth: "150px",
+      width:"200px",
+    },
+    {
+      name: "Actions",
+      cell: (row) =>
+        ["admin", "hr"].includes(role) ? (
+          <button
+            title="Actions"
+            onClick={(e) => {
+              e.stopPropagation();
+              const r = e.currentTarget.getBoundingClientRect();
+              setActionDropdown((prev) =>
+                prev.id === row.employee_id
+                  ? { id: null, rect: null }
+                  : { id: row.employee_id, rect: { top: r.top, bottom: r.bottom, left: r.left, right: r.right } }
+              );
+            }}
+            className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-300 bg-white hover:bg-gray-100 text-gray-600 transition-colors"
+          >
+            <FaEllipsisV size={14} />
+          </button>
+        ) : null,
+      ignoreRowClick: true,
+      width: "120px",
+    },
+  ];
+
   const groupedPayrolls = payrolls.reduce((acc, p) => {
     const month = p.pay_month;
     if (!acc[month]) acc[month] = [];
@@ -593,138 +736,18 @@ export default function Welcome() {
 
       {/* Employee Table */}
       {view === "employees" ? (
-        <div className="bg-white rounded shadow overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-            <thead className="bg-blue-100 text-gray-700">
-              <tr>
-                <th className="px-2 sm:px-4 py-3">Serial No</th>
-                <th className="px-2 sm:px-4 py-3">Name</th>
-                <th className="px-2 sm:px-4 py-3">Role</th>
-                <th className="px-2 sm:px-4 py-3">Email</th>
-                <th className="px-2 sm:px-4 py-3">Salary</th>
-                <th className="px-2 sm:px-4 py-3">Deductions</th>
-                <th className="px-2 sm:px-4 py-3">Joining Date</th>
-                <th className="px-2 sm:px-4 py-3 whitespace-nowrap">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="text-gray-800">
-              {search.trim().length > 0 && filtered.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan="8"
-                    className="text-center py-10 text-gray-500 text-lg"
-                  >
-                    No matching employees found.
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((emp, index) => (
-                  <tr
-                    key={emp.employee_id}
-                    className="border-t hover:bg-gray-50"
-                  >
-                    <td className="px-2 sm:px-4 py-2">{index + 1}</td>
-                    <td className="px-2 sm:px-4 py-2 whitespace-nowrap">
-                      <button
-                        onClick={() => navigate(`/employee/${emp.employee_id}`)}
-                        className="text-blue-600 hover:underline font-medium text-left"
-                      >
-                        {emp.first_name} {emp.last_name}
-                      </button>
-                    </td>
-                    <td className="px-2 sm:px-4 py-2">
-                      {["admin", "0", 0].includes(emp.role) ? (
-                        <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">
-                          Admin
-                        </span>
-                      ) : ["hr", "1", 1].includes(emp.role) ? (
-                        <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
-                          HR
-                        </span>
-                      ) : (
-                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-                          Employee
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-2 sm:px-4 py-2 whitespace-nowrap">{emp.email_address || "-"}</td>
-                    <td className="px-2 sm:px-4 py-2 whitespace-nowrap">
-                      {emp.salary != null && emp.salary !== "" ? (
-                        canRevealSalary ? (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              toggleSalaryVisibility(emp.employee_id)
-                            }
-                            className="text-blue-600 hover:underline"
-                          >
-                            {visibleSalaries[emp.employee_id]
-                              ? `₹${parseFloat(emp.salary).toFixed(2)}`
-                              : "*****"}
-                          </button>
-                        ) : (
-                          "*****"
-                        )
-                      ) : (
-                        "-"
-                      )}
-                    </td>
-                    <td className="px-2 sm:px-4 py-2 whitespace-nowrap">
-                      {emp.deduction != null && emp.deduction !== ""
-                        ? `₹${parseFloat(emp.deduction).toFixed(2)}`
-                        : "-"}
-                    </td>
-                    <td className="px-2 sm:px-4 py-2 whitespace-nowrap">
-                      {emp.joining_date
-                        ? new Date(emp.joining_date * 1000).toLocaleDateString(
-                            "en-IN",
-                            { day: "2-digit", month: "long", year: "numeric" }
-                          )
-                        : "-"}
-                    </td>
-                   <td className="px-2 py-2">
-  {["admin", "hr"].includes(role) && (
-    <div className="flex items-center gap-1.5 flex-nowrap">
-      <button
-        onClick={() => navigate(`/edit-employee/${emp.employee_id}`)}
-        className="bg-primary-600 text-white px-2 py-1 text-xs rounded hover:bg-primary-700 whitespace-nowrap shrink-0"
-      >
-        Edit
-      </button>
-
-      <button
-        onClick={() => confirmDeactivate(emp.employee_id)}
-        className="bg-[#00142A] text-white px-2 py-1 text-xs rounded whitespace-nowrap shrink-0"
-      >
-        Deactivate
-      </button>
-
-      <button
-        onClick={() =>
-          navigate(`/employee/${emp.employee_id}/payrolls`)
-        }
-        className="bg-primary-600 text-white px-2 py-1 text-xs rounded hover:bg-primary-700 whitespace-nowrap shrink-0"
-      >
-        View Payroll
-      </button>
-
-      <button
-        onClick={() => navigate(`/employee/${emp.employee_id}/leaves`)}
-        className="bg-primary-600 text-white px-2 py-1 text-xs rounded hover:bg-primary-700 whitespace-nowrap shrink-0"
-      >
-        View Leaves
-      </button>
-    </div>
-  )}
-</td>
-
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-          </div>
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <DataTable
+            columns={employeeColumns}
+            data={filtered}
+            progressPending={employeesLoading}
+            pagination
+            paginationRowsPerPageOptions={[5, 10, 25, 50]}
+            customStyles={tableCustomStyles}
+            noDataComponent={
+              <div className="text-center py-12 text-gray-400">No matching employees found.</div>
+            }
+          />
         </div>
       ) : view === "payroll" ? (
         <div className="space-y-8">
@@ -862,7 +885,7 @@ export default function Welcome() {
               </div>
             ))}
         </div>
-      ) : (
+      ) : view === "previous" ? (
         <div className="bg-white rounded shadow p-6">
           {previouspayrollsList.length === 0 ? (
             <div className="text-gray-500">No Previous payrolls</div>
@@ -923,6 +946,51 @@ export default function Welcome() {
             </table>
           )}
         </div>
+      ) : null}
+
+      {/* Actions Dropdown */}
+      {actionDropdown.id && actionDropdown.rect && (
+        <>
+          <div
+            className="fixed inset-0"
+            style={{ zIndex: 9998 }}
+            onClick={() => setActionDropdown({ id: null, rect: null })}
+          />
+          <div
+            style={{
+              position: "fixed",
+              top: actionDropdown.rect.bottom + 4,
+              left: Math.min(actionDropdown.rect.left, window.innerWidth - 180),
+              zIndex: 9999,
+            }}
+            className="bg-white border border-gray-200 rounded-lg shadow-xl py-1 w-44"
+          >
+            <button
+              onClick={() => { navigate(`/edit-employee/${actionDropdown.id}`); setActionDropdown({ id: null, rect: null }); }}
+              className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 flex items-center gap-3"
+            >
+              <FaEdit size={13} className="text-blue-700" /> Edit
+            </button>
+            <button
+              onClick={() => { confirmDeactivate(actionDropdown.id); setActionDropdown({ id: null, rect: null }); }}
+              className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 flex items-center gap-3"
+            >
+              <FaUserSlash size={13} className="text-slate-500" /> Deactivate
+            </button>
+            <button
+              onClick={() => { navigate(`/employee/${actionDropdown.id}/payrolls`); setActionDropdown({ id: null, rect: null }); }}
+              className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 flex items-center gap-3"
+            >
+              <FaMoneyBillWave size={13} className="text-blue-700" /> View Payrolls
+            </button>
+            <button
+              onClick={() => { navigate(`/employee/${actionDropdown.id}/leaves`); setActionDropdown({ id: null, rect: null }); }}
+              className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 flex items-center gap-3"
+            >
+              <FaCalendarAlt size={13} className="text-blue-700" /> View Leaves
+            </button>
+          </div>
+        </>
       )}
 
       {/* Delete Modal */}
