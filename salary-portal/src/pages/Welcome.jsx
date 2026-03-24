@@ -1025,7 +1025,7 @@ export default function Welcome() {
             className="bg-white border border-gray-200 rounded-lg shadow-xl py-1 w-44"
           >
             <button
-              onClick={() => { navigate(`/edit-employee/${actionDropdown.id}`); setActionDropdown({ id: null, rect: null }); }}
+              onClick={() => { navigate(`/edit-employee/${actionDropdown.id}`, { state: { from: "table" } }); setActionDropdown({ id: null, rect: null }); }}
               className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 flex items-center gap-3"
             >
               <FaEdit size={13} className="text-blue-700" /> Edit

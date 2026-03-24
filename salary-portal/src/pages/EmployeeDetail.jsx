@@ -140,7 +140,7 @@ export default function EmployeeDetail() {
   if (!employee)  return <div className="text-center py-20 text-red-500">Employee not found.</div>;
 
   return (
-    <div className="p-4 sm:p-6 max-w-4xl mx-auto">
+    <div className="p-4 sm:p-6 w-full">
 
       {/* Back */}
       <button
@@ -169,7 +169,7 @@ export default function EmployeeDetail() {
               </button>
             </div>
             <div className="text-center">
-              <h2 className="text-base font-bold text-gray-900 leading-tight">
+              <h2 className="text-base font-bold text-gray-900 leading-tight capitalize">
                 {employee.first_name} {employee.last_name}
               </h2>
               <p className="text-xs text-gray-500 mt-0.5 break-all">{employee.email_address || "—"}</p>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -36,6 +36,8 @@ const placeholderMap = {
 export default function EditEmployee() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromTable = location.state?.from === "table";
   const [loading, setLoading] = useState(true);
 
   const formik = useFormik({
@@ -72,7 +74,7 @@ export default function EditEmployee() {
         };
         await axios.put(`${API_BASE}/api/employees/${id}`, updatedData);
         toast.success("Employee updated successfully");
-        setTimeout(() => navigate(`/employee/${id}`), 2000);
+        setTimeout(() => navigate(fromTable ? "/welcome?view=employees" : `/employee/${id}`), 2000);
       } catch (err) {
         if (err.response?.data?.error === "Email already in use by another employee") {
           toast.error("This email is already assigned to another employee.");
@@ -129,7 +131,7 @@ export default function EditEmployee() {
       <div className="flex items-center justify-between mb-6">
         <button
           type="button"
-          onClick={() => navigate(`/employee/${id}`)}
+          onClick={() => navigate(fromTable ? "/welcome?view=employees" : `/employee/${id}`)}
           className="flex items-center gap-2 text-gray-600 hover:text-blue-700 transition text-sm font-medium"
         >
           <FaArrowLeft size={13} /> Back
@@ -178,7 +180,7 @@ export default function EditEmployee() {
           </button>
           <button
             type="button"
-            onClick={() => navigate(`/employee/${id}`)}
+            onClick={() => navigate(fromTable ? "/welcome?view=employees" : `/employee/${id}`)}
             className="w-40 border border-gray-300 text-gray-600 bg-gray-200 px-6 py-2 rounded hover:bg-gray-300 font-medium"
           >
             Cancel
