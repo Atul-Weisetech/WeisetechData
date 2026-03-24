@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import DataTable from "react-data-table-component";
-import { FaEdit, FaUserSlash, FaMoneyBillWave, FaCalendarAlt, FaEllipsisV, FaSearch, FaTimes } from "react-icons/fa";
+import { FaEdit, FaUserSlash, FaMoneyBillWave, FaCalendarAlt, FaEllipsisV, FaSearch, FaTimes, FaTrash, FaCheckCircle, FaEye } from "react-icons/fa";
 import { toast } from "react-toastify";
 import AddPayrollBreakdown from "./AddPayrollBreakdown";
 import AddPayrollMetaTypes from "./AddPayrollMetaTypes";
@@ -56,6 +56,10 @@ export default function Welcome() {
   const [visibleSalaries, setVisibleSalaries] = useState({});
   const [visibleDeductions, setVisibleDeductions] = useState({});
   const [actionDropdown, setActionDropdown] = useState({ id: null, rect: null });
+  const [payrollDropdown, setPayrollDropdown] = useState({ id: null, rect: null, payroll: null });
+  const [payrollFilterYear, setPayrollFilterYear] = useState("");
+  const [payrollFilterFrom, setPayrollFilterFrom] = useState("");
+  const [payrollFilterTo, setPayrollFilterTo] = useState("");
 
   useEffect(() => {
     const email = localStorage.getItem("email");
@@ -173,7 +177,8 @@ export default function Welcome() {
   const tableCustomStyles = {
     headRow: { style: { backgroundColor: "#eff6ff", borderBottom: "2px solid #bfdbfe" } },
     headCells: { style: { color: "#374151", fontWeight: "600", fontSize: "13px" } },
-    rows: { style: { "&:hover": { backgroundColor: "#f0f9ff" } } },
+    rows: { style: { "&:hover": { backgroundColor: "#f0f9ff" }, alignItems: "flex-start" } },
+    cells: { style: { whiteSpace: "normal", wordBreak: "break-word", paddingTop: "10px", paddingBottom: "10px" } },
     pagination: { style: { borderTop: "1px solid #e2e8f0", backgroundColor: "#f8fafc" } },
   };
 
@@ -181,7 +186,7 @@ export default function Welcome() {
     {
       name: "Sr.No",
       cell: (_, i) => i + 1,
-      width: "100px",
+      width: "65px",
     },
     {
       name: "Name",
@@ -195,23 +200,21 @@ export default function Welcome() {
         </button>
       ),
       sortable: true,
-      minWidth: "150px",
-      width:"200px",
+      grow: 2,
     },
     {
       name: "Email",
-      selector: (row) => row.email_address,
+      selector: (row) => (row.email_address || "").toLowerCase(),
       cell: (row) => row.email_address || "—",
       sortable: true,
-      minWidth: "180px",
-      width:"200px",
+      grow: 2,
     },
     {
       name: "Designation",
-      selector: (row) => row.designation,
+      selector: (row) => (row.designation || "").toLowerCase(),
       cell: (row) => row.designation || "—",
       sortable: true,
-      minWidth: "140px",
+      grow: 1,
     },
     {
       name: "Salary",
@@ -235,7 +238,7 @@ export default function Welcome() {
           "—"
         ),
       sortable: true,
-      width: "120px",
+      grow: 1,
     },
     {
       name: "Deductions",
@@ -259,7 +262,7 @@ export default function Welcome() {
           "—"
         ),
       sortable: true,
-      width: "120px",
+      grow: 1,
     },
     {
       name: "Joining Date",
@@ -268,13 +271,12 @@ export default function Welcome() {
         row.joining_date
           ? new Date(row.joining_date * 1000).toLocaleDateString("en-IN", {
               day: "2-digit",
-              month: "long",
+              month: "short",
               year: "numeric",
             })
           : "—",
       sortable: true,
-      minWidth: "150px",
-      width:"200px",
+      grow: 1,
     },
     {
       name: "Actions",
@@ -297,7 +299,7 @@ export default function Welcome() {
           </button>
         ) : null,
       ignoreRowClick: true,
-      width: "120px",
+      width: "80px",
     },
   ];
 
@@ -307,6 +309,46 @@ export default function Welcome() {
     acc[month].push(p);
     return acc;
   }, {});
+
+  const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+  const toMonthSortKey = (key) => {
+    const [m, y] = (key || "").split(" ");
+    const mi = MONTH_NAMES.indexOf(m);
+    return (parseInt(y, 10) || 0) * 100 + (mi >= 0 ? mi : 0);
+  };
+
+  const parseToYM = (key) => {
+    const [m, y] = (key || "").split(" ");
+    const mi = MONTH_NAMES.indexOf(m);
+    if (mi === -1 || !y) return null;
+    return `${y}-${String(mi + 1).padStart(2, "0")}`;
+  };
+
+  const availablePayrollYears = Array.from({ length: 51 }, (_, i) => String(2000 + i)).reverse();
+
+  const sortedPayrollEntries = Object.entries(groupedPayrolls)
+    .sort((a, b) => toMonthSortKey(a[0]) - toMonthSortKey(b[0]));
+
+  const filteredPayrollEntries = (() => {
+    const hasFilter = payrollFilterYear || payrollFilterFrom || payrollFilterTo;
+    if (!hasFilter) {
+      // No filter applied → show current month's data
+      const now = new Date();
+      const currentKey = `${MONTH_NAMES[now.getMonth()]} ${now.getFullYear()}`;
+      const currentEntry = sortedPayrollEntries.find(([key]) => key === currentKey);
+      return currentEntry ? [currentEntry] : [];
+    }
+    return sortedPayrollEntries.filter(([key]) => {
+      const ym = parseToYM(key);
+      if (!ym) return false;
+      // "all" means no year restriction — show every year
+      if (payrollFilterYear && payrollFilterYear !== "all" && key.split(" ")[1] !== payrollFilterYear) return false;
+      if (payrollFilterFrom && ym < payrollFilterFrom) return false;
+      if (payrollFilterTo && ym > payrollFilterTo) return false;
+      return true;
+    });
+  })();
 
   const formatMonth = (monthKey) => {
     if (!monthKey || typeof monthKey !== "string") return "Invalid Month";
@@ -753,47 +795,80 @@ export default function Welcome() {
           />
         </div>
       ) : view === "payroll" ? (
-        <div className="space-y-8">
-          {Object.entries(groupedPayrolls)
-            .sort((a, b) => {
-              const toKey = (key) => {
-                if (!key) return 0;
-                const [m, y] = String(key).split(" ");
-                const months = [
-                  "January",
-                  "February",
-                  "March",
-                  "April",
-                  "May",
-                  "June",
-                  "July",
-                  "August",
-                  "September",
-                  "October",
-                  "November",
-                  "December",
-                ];
-                const mi = months.indexOf(m);
-                const yi = parseInt(y, 10) || 0;
-                return yi * 100 + (mi >= 0 ? mi : 0);
-              };
-              return toKey(a[0]) - toKey(b[0]);
-            })
-            .map(([month, data]) => (
-              <div
-                key={month}
-                className="bg-white rounded-lg shadow-md p-3 sm:p-6 border overflow-hidden"
+        <div className="space-y-6">
+
+          {/* Filter Bar */}
+          <div className="bg-white rounded-lg shadow p-4 flex flex-wrap items-end gap-4">
+            {/* Year filter */}
+            <div className="flex flex-col gap-1 min-w-[120px]">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Year</label>
+              <select
+                value={payrollFilterYear}
+                onChange={(e) => { setPayrollFilterYear(e.target.value); setPayrollFilterFrom(""); setPayrollFilterTo(""); }}
+                className="border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
               >
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0 mb-4 border-b pb-2">
-                  <h2 className="text-lg sm:text-2xl font-semibold text-indigo-700">
-                    {formatMonth(month)}
-                  </h2>
+                <option value="">Select Year</option>
+                <option value="all">All Years</option>
+                {availablePayrollYears.map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* From month */}
+            <div className="flex flex-col gap-1 min-w-[160px]">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">From Month</label>
+              <input
+                type="month"
+                value={payrollFilterFrom}
+                onChange={(e) => { setPayrollFilterFrom(e.target.value); setPayrollFilterYear(""); }}
+                className="border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+              />
+            </div>
+
+            {/* To month */}
+            <div className="flex flex-col gap-1 min-w-[160px]">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">To Month</label>
+              <input
+                type="month"
+                value={payrollFilterTo}
+                min={payrollFilterFrom || undefined}
+                onChange={(e) => { setPayrollFilterTo(e.target.value); setPayrollFilterYear(""); }}
+                className="border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
+              />
+            </div>
+
+            {/* Reset */}
+            {(payrollFilterYear || payrollFilterFrom || payrollFilterTo) && (
+              <button
+                onClick={() => { setPayrollFilterYear(""); setPayrollFilterFrom(""); setPayrollFilterTo(""); }}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                <FaTimes size={11} /> Reset
+              </button>
+            )}
+
+            {/* Result count */}
+            <div className="ml-auto text-sm text-gray-400 self-center">
+              Showing <span className="font-semibold text-gray-600">{filteredPayrollEntries.length}</span> month{filteredPayrollEntries.length !== 1 ? "s" : ""}
+              {!payrollFilterYear && !payrollFilterFrom && !payrollFilterTo && (
+                <span className="ml-1 text-xs text-blue-500">(current month)</span>
+              )}
+            </div>
+          </div>
+
+          {filteredPayrollEntries.length === 0 ? (
+            <div className="bg-white rounded-lg shadow p-10 text-center text-gray-400">
+              No payroll records found for the selected filter.
+            </div>
+          ) : filteredPayrollEntries.map(([month, data]) => (
+              <div key={month} className="bg-white rounded-lg shadow-md border overflow-hidden">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 px-4 sm:px-6 pt-4 pb-3 border-b">
+                  <h2 className="text-lg sm:text-xl font-semibold text-indigo-700">{formatMonth(month)}</h2>
                   <button
-                    disabled={groupedPayrolls[month]?.every(
-                      (p) => p.is_published
-                    )}
+                    disabled={groupedPayrolls[month]?.every((p) => p.is_published)}
                     onClick={() => publishAllForMonth(month)}
-                    className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded transition text-white text-sm sm:text-base whitespace-nowrap ${
+                    className={`px-3 py-1.5 rounded text-white text-sm whitespace-nowrap ${
                       groupedPayrolls[month]?.every((p) => p.is_published)
                         ? "bg-gray-400 cursor-not-allowed"
                         : "bg-green-600 hover:bg-green-700"
@@ -802,152 +877,133 @@ export default function Welcome() {
                     Publish All
                   </button>
                 </div>
-
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-sm">
-                    <thead className="bg-indigo-100 text-gray-700">
-                      <tr>
-                        <th className="px-2 sm:px-4 py-3">Serial No</th>
-                        <th className="px-2 sm:px-4 py-3">Employee Name</th>
-                        <th className="px-2 sm:px-4 py-3">Amount</th>
-                        <th className="px-2 sm:px-4 py-3">Date</th>
-                        <th className="px-2 sm:px-4 py-3">Payment Mode</th>
-                        <th className="px-2 sm:px-4 py-3 whitespace-nowrap">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="text-gray-800">
-                      {data.map((p, index) => (
-                        <tr
-                          key={p.id}
-                          className={`border-t ${
-                            index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                          }`}
+                <DataTable
+                  columns={[
+                    { name: "Sr.No", cell: (_, i) => i + 1, width: "100px" },
+                    {
+                      name: "Employee Name",
+                      selector: (p) => getEmployeeName(p.fk_employee_id).toLowerCase(),
+                      cell: (p) => <span className="font-medium text-gray-800">{getEmployeeName(p.fk_employee_id)}</span>,
+                      sortable: true,
+                      grow: 2,
+                    },
+                    {
+                      name: "Amount",
+                      selector: (p) => parseFloat(p.payroll_amount) || 0,
+                      cell: (p) => <span className="text-blue-700 font-medium">₹{parseFloat(p.payroll_amount).toFixed(2)}</span>,
+                      sortable: true,
+                      grow: 1,
+                    },
+                    {
+                      name: "Date",
+                      selector: (p) => p.payroll_date,
+                      cell: (p) => new Date(p.payroll_date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }),
+                      sortable: true,
+                      grow: 1,
+                    },
+                    {
+                      name: "Payment Mode",
+                      selector: (p) => (p.mode_of_payment || "").toLowerCase(),
+                      cell: (p) => p.mode_of_payment,
+                      sortFunction: (a, b) => (a.mode_of_payment || "").toLowerCase().localeCompare((b.mode_of_payment || "").toLowerCase()),
+                      sortable: true,
+                      grow: 1,
+                    },
+                    {
+                      name: "Status",
+                      selector: (p) => p.is_published,
+                      cell: (p) => (
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${p.is_published ? "bg-green-100 text-green-700 border-green-200" : "bg-yellow-100 text-yellow-700 border-yellow-200"}`}>
+                          {p.is_published ? "Published" : "Draft"}
+                        </span>
+                      ),
+                      sortable: true,
+                      grow: 1,
+                    },
+                    ...(["admin", "hr"].includes(role) ? [{
+                      name: "Actions",
+                      cell: (p) => (
+                        <button
+                          title="Actions"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const r = e.currentTarget.getBoundingClientRect();
+                            setPayrollDropdown((prev) =>
+                              prev.id === p.id
+                                ? { id: null, rect: null, payroll: null }
+                                : { id: p.id, rect: { top: r.top, bottom: r.bottom, left: r.left, right: r.right }, payroll: p }
+                            );
+                          }}
+                          className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-300 bg-white hover:bg-gray-100 text-gray-600 transition-colors"
                         >
-                          <td className="px-2 sm:px-4 py-2">{index + 1}</td>
-                          <td className="px-2 sm:px-4 py-2 whitespace-nowrap">
-                            {getEmployeeName(p.fk_employee_id)}
-                          </td>
-
-                          <td className="px-2 sm:px-4 py-2 whitespace-nowrap">
-                            ₹{parseFloat(p.payroll_amount).toFixed(2)}
-                          </td>
-                          <td className="px-2 sm:px-4 py-2 whitespace-nowrap">
-                            {new Date(p.payroll_date).toLocaleDateString(
-                              "en-IN",
-                              {
-                                day: "2-digit",
-                                month: "long",
-                                year: "numeric",
-                              }
-                            )}
-                          </td>
-                          <td className="px-2 sm:px-4 py-2 whitespace-nowrap">{p.mode_of_payment}</td>
-                        <td className="px-2 py-2">
-                          {["admin", "hr"].includes(role) && (
-                           <div className="flex items-center gap-1 flex-nowrap">
-                              <button
-                                onClick={() =>
-                                  navigate(`/edit-payroll/${p.id}`)
-                                }
-                                className="bg-primary-600 text-white px-1.5 sm:px-2 py-1 text-xs rounded hover:bg-primary-700 whitespace-nowrap shrink-0"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => confirmDelete(p.id)}
-                                className="bg-primary-600 text-white px-1.5 sm:px-2 py-1 text-xs rounded hover:bg-primary-700 whitespace-nowrap shrink-0"
-                              >
-                                Delete
-                              </button>
-                              <button
-                                disabled={p.is_published}
-                                className={`px-1.5 sm:px-2 py-1 rounded text-white text-xs whitespace-nowrap shrink-0 ${
-                                  p.is_published
-                                    ? "bg-gray-400 cursor-not-allowed"
-                                    : "bg-primary-600 hover:bg-primary-700"
-                                }`}
-                                onClick={() => publishPayroll(p.id)}
-                              >
-                                {p.is_published ? "Published" : "Publish"}
-                              </button>
-                              <button
-                                className="bg-primary-600 text-white px-1.5 sm:px-2 py-1 text-xs rounded hover:bg-primary-700 whitespace-nowrap shrink-0"
-                                onClick={() => handleViewBreakdown(p)}
-                              >
-                                <span className="hidden sm:inline">Manage Breakdown</span>
-                                <span className="sm:hidden">Breakdown</span>
-                              </button>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                </div>
+                          <FaEllipsisV size={14} />
+                        </button>
+                      ),
+                      ignoreRowClick: true,
+                      width: "80px",
+                    }] : []),
+                  ]}
+                  data={data}
+                  customStyles={tableCustomStyles}
+                  noDataComponent={<div className="py-6 text-center text-gray-400">No payrolls for this month.</div>}
+                />
               </div>
             ))}
         </div>
       ) : view === "previous" ? (
-        <div className="bg-white rounded shadow p-6">
-          {previouspayrollsList.length === 0 ? (
-            <div className="text-gray-500">No Previous payrolls</div>
-          ) : (
-            <table className="min-w-full text-sm">
-              <thead className="bg-blue-100">
-                <tr>
-                  <th className="px-4 py-3">#</th>
-                  <th className="px-4 py-3">Employee</th>
-                  <th className="px-4 py-3">Amount</th>
-                  <th className="px-4 py-3">Month</th>
-                  <th className="px-4 py-3">Payment Mode</th>
-                  <th className="px-4 py-3">Download</th>{" "}
-                  {/* Added Download column */}
-                </tr>
-              </thead>
-              <tbody>
-                {previouspayrollsList.map((p, idx) => {
-                  // Prepare payrollData for the component
-                  const payrollData = {
-                    payroll_amount: p.payroll_amount,
-                    pay_month: p.pay_month,
-                    payroll_date: p.payroll_date, // Make sure this field exists
-                    mode_of_payment: p.mode_of_payment,
-                    breakdown: p.breakdown || [], // Assuming breakdown data exists
-                  };
-
-                  // Prepare employeeData for the component
-                  const employeeData = {
-                    name: `${p.first_name} ${p.last_name}`,
-                    email_address: p.email || p.email_address || "", // Adjust field name as needed
-                    designation: p.designation || p.role || "", // Adjust field name as needed
-                  };
-
-                  return (
-                    <tr key={p.id} className="border-t">
-                      <td className="px-4 py-2">{idx + 1}</td>
-                      <td className="px-4 py-2">
-                        {p.first_name} {p.last_name}
-                      </td>
-                      <td className="px-4 py-2">
-                        ₹{parseFloat(p.payroll_amount).toFixed(2)}
-                      </td>
-                      <td className="px-4 py-2">{p.pay_month}</td>
-                      <td className="px-4 py-2">{p.mode_of_payment}</td>
-                      <td className="px-4 py-2">
-                        {/* Add the DownloadPayrollPDF component */}
-                        <DownloadPayrollPDF
-                          payrollData={payrollData}
-                          employeeData={employeeData}
-                          className="text-sm px-3 py-1"
-                        />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <DataTable
+            columns={[
+              { name: "#", cell: (_, i) => i + 1, width: "55px" },
+              {
+                name: "Employee",
+                selector: (p) => `${p.first_name || ""} ${p.last_name || ""}`.trim().toLowerCase(),
+                cell: (p) => <span className="font-medium text-gray-800">{p.first_name} {p.last_name}</span>,
+                sortable: true,
+                grow: 2,
+              },
+              {
+                name: "Amount",
+                selector: (p) => parseFloat(p.payroll_amount) || 0,
+                cell: (p) => <span className="text-blue-700 font-medium">₹{parseFloat(p.payroll_amount).toFixed(2)}</span>,
+                sortable: true,
+                grow: 1,
+              },
+              {
+                name: "Month",
+                selector: (p) => (p.pay_month || "").toLowerCase(),
+                cell: (p) => p.pay_month,
+                sortFunction: (a, b) => (a.pay_month || "").toLowerCase().localeCompare((b.pay_month || "").toLowerCase()),
+                sortable: true,
+                grow: 1,
+              },
+              {
+                name: "Payment Mode",
+                selector: (p) => (p.mode_of_payment || "").toLowerCase(),
+                cell: (p) => p.mode_of_payment,
+                sortFunction: (a, b) => (a.mode_of_payment || "").toLowerCase().localeCompare((b.mode_of_payment || "").toLowerCase()),
+                sortable: true,
+                grow: 1,
+              },
+              {
+                name: "Download",
+                cell: (p) => (
+                  <DownloadPayrollPDF
+                    payrollData={{ payroll_amount: p.payroll_amount, pay_month: p.pay_month, payroll_date: p.payroll_date, mode_of_payment: p.mode_of_payment, breakdown: p.breakdown || [] }}
+                    employeeData={{ name: `${p.first_name} ${p.last_name}`, email_address: p.email || p.email_address || "", designation: p.designation || p.role || "" }}
+                    className="text-sm px-3 py-1"
+                  />
+                ),
+                ignoreRowClick: true,
+                grow: 1,
+              },
+            ]}
+            data={previouspayrollsList}
+            customStyles={tableCustomStyles}
+            pagination
+            paginationRowsPerPageOptions={[5, 10, 25, 50]}
+            noDataComponent={<div className="py-10 text-center text-gray-400">No previous payrolls found.</div>}
+          />
         </div>
       ) : null}
 
@@ -991,6 +1047,53 @@ export default function Welcome() {
               className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 flex items-center gap-3"
             >
               <FaCalendarAlt size={13} className="text-blue-700" /> View Leaves
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* Payroll Actions Dropdown */}
+      {payrollDropdown.id && payrollDropdown.rect && (
+        <>
+          <div
+            className="fixed inset-0"
+            style={{ zIndex: 9998 }}
+            onClick={() => setPayrollDropdown({ id: null, rect: null, payroll: null })}
+          />
+          <div
+            style={{
+              position: "fixed",
+              top: payrollDropdown.rect.bottom + 4,
+              left: Math.min(payrollDropdown.rect.left, window.innerWidth - 190),
+              zIndex: 9999,
+            }}
+            className="bg-white border border-gray-200 rounded-lg shadow-xl py-1 w-48"
+          >
+            <button
+              onClick={() => { navigate(`/edit-payroll/${payrollDropdown.id}`); setPayrollDropdown({ id: null, rect: null, payroll: null }); }}
+              className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 flex items-center gap-3"
+            >
+              <FaEdit size={13} className="text-blue-700" /> Edit
+            </button>
+            <button
+              onClick={() => { confirmDelete(payrollDropdown.id); setPayrollDropdown({ id: null, rect: null, payroll: null }); }}
+              className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-3"
+            >
+              <FaTrash size={13} className="text-red-500" /> Delete
+            </button>
+            <button
+              disabled={payrollDropdown.payroll?.is_published}
+              onClick={() => { publishPayroll(payrollDropdown.id); setPayrollDropdown({ id: null, rect: null, payroll: null }); }}
+              className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 ${payrollDropdown.payroll?.is_published ? "text-gray-400 cursor-not-allowed" : "text-green-700 hover:bg-green-50"}`}
+            >
+              <FaCheckCircle size={13} className={payrollDropdown.payroll?.is_published ? "text-gray-400" : "text-green-600"} />
+              {payrollDropdown.payroll?.is_published ? "Published" : "Publish"}
+            </button>
+            <button
+              onClick={() => { handleViewBreakdown(payrollDropdown.payroll); setPayrollDropdown({ id: null, rect: null, payroll: null }); }}
+              className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 flex items-center gap-3"
+            >
+              <FaEye size={13} className="text-blue-700" /> Manage Breakdown
             </button>
           </div>
         </>

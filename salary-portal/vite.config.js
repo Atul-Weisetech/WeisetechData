@@ -10,7 +10,8 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://weisetechdata.onrender.com',
+         target: 'https://weisetechdata.onrender.com',
+        //target:'http://localhost:5000',
         changeOrigin: true,
       },
     },

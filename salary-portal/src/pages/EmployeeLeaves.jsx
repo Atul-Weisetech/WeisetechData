@@ -8,7 +8,8 @@ import API_BASE from "../config";
 const tableCustomStyles = {
   headRow: { style: { backgroundColor: "#eff6ff", borderBottom: "2px solid #bfdbfe" } },
   headCells: { style: { color: "#374151", fontWeight: "600", fontSize: "13px" } },
-  rows: { style: { "&:hover": { backgroundColor: "#f0f9ff" } } },
+  rows: { style: { "&:hover": { backgroundColor: "#f0f9ff" }, alignItems: "flex-start" } },
+  cells: { style: { whiteSpace: "normal", wordBreak: "break-word", paddingTop: "10px", paddingBottom: "10px" } },
   pagination: { style: { borderTop: "1px solid #e2e8f0", backgroundColor: "#f8fafc" } },
 };
 
@@ -80,19 +81,19 @@ export default function EmployeeLeaves() {
       selector: (row) => row.from_date,
       cell: (row) => `${new Date(row.from_date).toLocaleDateString()} – ${new Date(row.to_date).toLocaleDateString()}`,
       sortable: true,
-      minWidth: "160px",
+      grow: 1,
     },
     {
       name: "Days",
       selector: (row) => row.number_of_days,
       sortable: true,
-      width: "75px",
+      width: "70px",
     },
     {
       name: "Description",
       selector: (row) => row.description,
       cell: (row) => (
-        <span title={row.description} className="line-clamp-1 block max-w-[200px] truncate">
+        <span title={row.description} className="text-sm text-gray-700">
           {row.description}
         </span>
       ),
@@ -100,22 +101,24 @@ export default function EmployeeLeaves() {
     },
     {
       name: "Status",
-      selector: (row) => row.status_text,
+      selector: (row) => (row.status_text || "").toLowerCase(),
       cell: (row) => <StatusBadge statusText={row.status_text} />,
       sortable: true,
-      width: "120px",
+      grow: 1,
     },
     {
       name: "Applied Date",
       selector: (row) => row.applied_date,
       cell: (row) => (row.applied_date ? new Date(row.applied_date).toLocaleDateString() : "—"),
       sortable: true,
-      minWidth: "120px",
+      grow: 1,
     },
     {
       name: "Reviewed By",
       selector: (row) => row.reviewed_by || "—",
+      sortFunction: (a, b) => (a.reviewed_by || "").toLowerCase().localeCompare((b.reviewed_by || "").toLowerCase()),
       sortable: true,
+      grow: 1,
     },
   ];
 

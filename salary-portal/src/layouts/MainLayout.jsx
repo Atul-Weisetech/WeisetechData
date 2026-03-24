@@ -1,14 +1,25 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import CustomConfirmDialog from "../components/CustomConfirmDialog";
 import logo from "../assets/weisetechLogo.png";
 
 export default function MainLayout() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen]     = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [dropdownOpen, setDropdownOpen]           = useState(false);
+  const dropdownRef                               = useRef(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target))
+        setDropdownOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   const rawName     = localStorage.getItem("name")        || "";
   const name        = rawName
@@ -60,44 +71,83 @@ export default function MainLayout() {
             {/* Right: notification bell (employee only) + user info + badge + logout */}
             <div className="flex items-center gap-2 sm:gap-3">
 
-              {/* Notification bell — shown for employee role */}
-              {!isHR && (
+
+              {/* User Avatar Dropdown */}
+              <div
+                className="relative"
+                ref={dropdownRef}
+                onMouseEnter={() => setDropdownOpen(true)}
+                onMouseLeave={() => setDropdownOpen(false)}
+              >
                 <button
                   type="button"
-                  onClick={() => navigate("/home?section=notifications")}
-                  className="relative w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors"
-                  aria-label="Notifications"
+                  className="flex items-center gap-2 px-1 py-1 rounded-xl bg-white hover:bg-slate-50 transition-all"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                  </svg>
-                  {notificationCount > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                      {notificationCount > 99 ? "99+" : notificationCount}
-                    </span>
-                  )}
+                  {/* Avatar with user icon overlay */}
+                  <div className="relative w-9 h-9 shrink-0">
+                    <div className="w-9 h-9 rounded-full bg-primary-600 text-white flex items-center justify-center text-sm font-bold">
+                      {name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2)}
+                    </div>
+                    {/* small user icon badge */}
+                    <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-2.5 h-2.5 text-primary-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+                      </svg>
+                    </div>
+                  </div>
+                  
                 </button>
-              )}
 
-              {/* User name + designation */}
-              <div className="text-right leading-tight">
-                <div className="text-sm font-semibold text-gray-800">{name}</div>
-                {designation && <div className="text-xs text-gray-500 hidden sm:block">{designation}</div>}
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-0 w-56 bg-white rounded-xl shadow-lg border border-slate-100 z-50 overflow-hidden">
+                    {/* User info */}
+                    <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100">
+                      <div className="w-10 h-10 rounded-full bg-primary-600 text-white flex items-center justify-center text-sm font-bold shrink-0">
+                        {name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2)}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-800 truncate">{name}</p>
+                        {designation && <p className="text-xs text-gray-500 truncate">{designation}</p>}
+                        <span className={`inline-block mt-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${roleBadgeClass}`}>
+                          {roleLabel}
+                        </span>
+                      </div>
+                    </div>
+                    {/* Notifications — employee only */}
+                    {!isHR && (
+                      <button
+                        type="button"
+                        onClick={() => { setDropdownOpen(false); navigate(`/home?section=notifications&_t=${Date.now()}`); }}
+                        className="w-full flex items-center justify-between gap-2 px-4 py-3 text-sm text-gray-700 hover:bg-slate-50 transition-colors font-medium border-b border-slate-100"
+                      >
+                        <div className="flex items-center gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                          </svg>
+                          Notifications
+                        </div>
+                        {notificationCount > 0 && (
+                          <span className="min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                            {notificationCount > 99 ? "99+" : notificationCount}
+                          </span>
+                        )}
+                      </button>
+                    )}
+
+                    {/* Logout */}
+                    <button
+                      type="button"
+                      onClick={() => { setDropdownOpen(false); setShowLogoutConfirm(true); }}
+                      className="w-full flex items-center gap-2 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" />
+                      </svg>
+                      Logout
+                    </button>
+                  </div>
+                )}
               </div>
-
-              {/* Role badge */}
-              <span className={`text-xs font-semibold px-2 py-1 rounded-full border ${roleBadgeClass}`}>
-                {roleLabel}
-              </span>
-
-              {/* Logout button */}
-              <button
-                type="button"
-                onClick={() => setShowLogoutConfirm(true)}
-                className="text-sm px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 font-medium transition-colors"
-              >
-                Logout
-              </button>
             </div>
           </div>
         </header>

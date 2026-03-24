@@ -219,28 +219,31 @@ exports.getEmployees = (req, res) => {
   `;
   
   // Try to include is_active if column exists, otherwise query without it
+  // Also exclude HR users (user_role = 1) by joining with tbl_user on email_address
   const queryWithActive = `
-    SELECT 
-      id AS employee_id,
-      first_name,
-      last_name,
-      email_address,
-      designation,
-      city,
-      state,
-      postal_code,
-      salary,
-      deduction,
-      joining_date,
-      address_line_1,
-      address_line_2,
-      is_active
-    FROM tbl_employee
+    SELECT
+      e.id AS employee_id,
+      e.first_name,
+      e.last_name,
+      e.email_address,
+      e.designation,
+      e.city,
+      e.state,
+      e.postal_code,
+      e.salary,
+      e.deduction,
+      e.joining_date,
+      e.address_line_1,
+      e.address_line_2,
+      e.is_active
+    FROM tbl_employee e
+    LEFT JOIN tbl_user u ON u.email_address = e.email_address
+    WHERE (u.user_role IS NULL OR u.user_role != 1)
   `;
-  
+
   // Only show active employees by default if is_active column exists
-  const whereClause = (!includeInactive || includeInactive === 'false') ? " WHERE is_active = TRUE" : "";
-  const fullQueryWithActive = queryWithActive + whereClause;
+  const activeFilter = (!includeInactive || includeInactive === 'false') ? " AND e.is_active = TRUE" : "";
+  const fullQueryWithActive = queryWithActive + activeFilter;
   const fullQueryWithoutActive = query;
 
   // Try query with is_active first
@@ -268,6 +271,7 @@ exports.getEmployees = (req, res) => {
 
 exports.getEmployeeById = (req, res) => {
   const id = req.params.id;
+
   if (!id) {
     return res.status(400).json({ error: "Employee id is required" });
   }
@@ -311,8 +315,9 @@ exports.getEmployeeById = (req, res) => {
       }
       const employee = rows[0];
       if (employee.joining_date) {
-        employee.joining_date = formatJoiningDate(employee.joining_date);
+        employee.joining_date = employee.joining_date;// formatJoiningDate(employee.joining_date);
       }
+      
       res.json(employee);
     }
   );

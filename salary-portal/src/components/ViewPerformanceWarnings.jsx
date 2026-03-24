@@ -9,7 +9,8 @@ import API_BASE from "../config";
 const tableCustomStyles = {
   headRow: { style: { backgroundColor: "#eff6ff", borderBottom: "2px solid #bfdbfe" } },
   headCells: { style: { color: "#374151", fontWeight: "600", fontSize: "13px" } },
-  rows: { style: { "&:hover": { backgroundColor: "#f0f9ff" }, alignItems: "flex-start", paddingTop: "8px", paddingBottom: "8px" } },
+  rows: { style: { "&:hover": { backgroundColor: "#f0f9ff" }, alignItems: "flex-start" } },
+  cells: { style: { whiteSpace: "normal", wordBreak: "break-word", paddingTop: "10px", paddingBottom: "10px" } },
   pagination: { style: { borderTop: "1px solid #e2e8f0", backgroundColor: "#f8fafc" } },
 };
 
@@ -163,7 +164,7 @@ function ViewPerformanceWarnings({ onBack }) {
         </div>
       ),
       sortable: true,
-      minWidth: "140px",
+      grow: 1,
     },
     {
       name: "Warning Types",
@@ -234,14 +235,14 @@ function ViewPerformanceWarnings({ onBack }) {
       name: "Created By",
       selector: (row) => row.created_by || '—',
       sortable: true,
-      minWidth: "120px",
+      grow: 1,
     },
     {
       name: "Created At",
       selector: (row) => row.created_at,
       cell: (row) => formatDate(row.created_at),
       sortable: true,
-      minWidth: "160px",
+      grow: 1,
     },
     {
       name: "Actions",
@@ -278,7 +279,7 @@ function ViewPerformanceWarnings({ onBack }) {
           </div>
         ),
       ignoreRowClick: true,
-      minWidth: "140px",
+      grow: 1,
     },
   ];
 

@@ -121,12 +121,21 @@ export default function AddHR() {
           )}
         </div>
 
-        <button
-          type="submit"
-          className="w-full bg-primary-600 text-white py-2 rounded hover:bg-primary-700 transition"
-        >
-          Add HR
-        </button>
+        <div className="flex items-center gap-3 mt-2">
+          <button
+            type="submit"
+            className="bg-primary-600 text-white px-6 py-2 rounded hover:bg-primary-700 font-medium"
+          >
+            Add HR
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/welcome")}
+            className="w-35 border border-gray-300 text-gray-600 bg-gray-200 px-6 py-2 rounded hover:bg-gray-300 font-medium"
+          >
+            Cancel
+          </button>
+        </div>
       </form>
     </div>
   );

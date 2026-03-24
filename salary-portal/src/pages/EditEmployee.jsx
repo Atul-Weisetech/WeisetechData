@@ -72,7 +72,7 @@ export default function EditEmployee() {
         };
         await axios.put(`${API_BASE}/api/employees/${id}`, updatedData);
         toast.success("Employee updated successfully");
-        setTimeout(() => navigate("/welcome"), 2000);
+        setTimeout(() => navigate(`/employee/${id}`), 2000);
       } catch (err) {
         if (err.response?.data?.error === "Email already in use by another employee") {
           toast.error("This email is already assigned to another employee.");
@@ -129,7 +129,7 @@ export default function EditEmployee() {
       <div className="flex items-center justify-between mb-6">
         <button
           type="button"
-          onClick={() => navigate(-1)}
+          onClick={() => navigate(`/employee/${id}`)}
           className="flex items-center gap-2 text-gray-600 hover:text-blue-700 transition text-sm font-medium"
         >
           <FaArrowLeft size={13} /> Back
@@ -169,12 +169,21 @@ export default function EditEmployee() {
           ))}
         </div>
 
-        <button
-          type="submit"
-          className="bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 w-full mt-6"
-        >
-          Save Changes
-        </button>
+        <div className="flex items-center gap-3 mt-6">
+          <button
+            type="submit"
+            className="bg-primary-600 text-white px-6 py-2 rounded hover:bg-primary-700 font-medium"
+          >
+            Save Changes
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate(`/employee/${id}`)}
+            className="w-40 border border-gray-300 text-gray-600 bg-gray-200 px-6 py-2 rounded hover:bg-gray-300 font-medium"
+          >
+            Cancel
+          </button>
+        </div>
       </form>
     </div>
   );

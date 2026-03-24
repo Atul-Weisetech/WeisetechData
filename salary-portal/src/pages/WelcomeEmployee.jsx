@@ -32,6 +32,7 @@ function WelcomeEmployee() {
   const [wfhRequests, setWfhRequests] = useState([]);
   const [leaveList, setLeaveList] = useState([]);
   const [leaveFilter, setLeaveFilter] = useState("all");
+  const [wfhFilter, setWfhFilter] = useState("all");
   const [reviewedUpdatesCount, setReviewedUpdatesCount] = useState(0);
   const [lastSeenReviewedCount, setLastSeenReviewedCount] = useState(0);
   const [unreadAppNotificationsCount, setUnreadAppNotificationsCount] = useState(0);
@@ -694,27 +695,27 @@ function WelcomeEmployee() {
 
               <DataTable
                 columns={[
-                  { name: "#", cell: (_, i) => i + 1, width: "60px" },
+                  { name: "Sr.No", cell: (_, i) => i + 1, width: "75px" },
                   {
                     name: "From",
                     selector: (r) => r.from_date,
                     cell: (r) => r.from_date ? new Date(r.from_date).toLocaleDateString() : "—",
                     sortable: true,
-                    minWidth: "110px",
+                    grow: 1,
                   },
                   {
                     name: "To",
                     selector: (r) => r.to_date,
                     cell: (r) => r.to_date ? new Date(r.to_date).toLocaleDateString() : "—",
                     sortable: true,
-                    minWidth: "110px",
+                    grow: 1,
                   },
-                  { name: "Days", selector: (r) => r.number_of_days, sortable: true, width: "120px" },
+                  { name: "Days", selector: (r) => r.number_of_days, sortable: true, width: "65px" },
                   {
                     name: "Reason",
                     selector: (r) => r.description,
                     cell: (r) => (
-                      <span title={r.description} className="block truncate max-w-[180px] text-sm text-gray-700">
+                      <span title={r.description} className="text-sm text-gray-700">
                         {r.description || "—"}
                       </span>
                     ),
@@ -722,19 +723,19 @@ function WelcomeEmployee() {
                   },
                   {
                     name: "Status",
-                    selector: (r) => r.status_text || r.status,
+                    selector: (r) => (r.status_text || r.status || "").toLowerCase(),
                     cell: (r) => getStatusBadge(r.status_text || r.status),
                     sortable: true,
-                    minWidth: "110px",
+                    grow: 1,
                   },
                   {
                     name: "Applied On",
                     selector: (r) => r.applied_date,
                     cell: (r) => r.applied_date ? new Date(r.applied_date).toLocaleDateString() : "—",
                     sortable: true,
-                    minWidth: "110px",
+                    grow: 1,
                   },
-                  { name: "Reviewed By", selector: (r) => r.reviewed_by || "—", sortable: true, minWidth: "120px" },
+                  { name: "Reviewed By", selector: (r) => (r.reviewed_by || "").toLowerCase(), cell: (r) => r.reviewed_by || "—", sortable: true, grow: 1 },
                 ]}
                 data={filteredLeaves}
                 pagination
@@ -742,7 +743,8 @@ function WelcomeEmployee() {
                 customStyles={{
                   headRow: { style: { backgroundColor: "#eff6ff", borderBottom: "2px solid #bfdbfe" } },
                   headCells: { style: { color: "#374151", fontWeight: "600", fontSize: "13px" } },
-                  rows: { style: { "&:hover": { backgroundColor: "#f0f9ff" } } },
+                  rows: { style: { "&:hover": { backgroundColor: "#f0f9ff" }, alignItems: "flex-start" } },
+                  cells: { style: { whiteSpace: "normal", wordBreak: "break-word", paddingTop: "10px", paddingBottom: "10px" } },
                   pagination: { style: { borderTop: "1px solid #e2e8f0", backgroundColor: "#f8fafc" } },
                 }}
                 noDataComponent={
@@ -756,19 +758,134 @@ function WelcomeEmployee() {
         );
       }
 
-      case "work-from-home":
+      case "work-from-home": {
+        const wfhFilterOptions = ["all", "approved", "pending", "declined"];
+        const myWfh = wfhRequests.filter((r) => String(r.employee_id) === String(employeeId));
+        const filteredWfh = wfhFilter === "all"
+          ? myWfh
+          : myWfh.filter((r) => {
+              const s = (r.status_text || r.status || "").toLowerCase();
+              if (wfhFilter === "pending") return s === "pending" || s === "requested";
+              return s === wfhFilter;
+            });
+
+        const getWfhStatusBadge = (statusText) => {
+          const s = (statusText || "").toLowerCase();
+          const styles = {
+            approved: "bg-green-100 text-green-800 border-green-200",
+            declined: "bg-red-100 text-red-800 border-red-200",
+            requested: "bg-yellow-100 text-yellow-800 border-yellow-200",
+            pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
+          };
+          return (
+            <span className={`px-3 py-1 rounded-full text-xs font-medium border ${styles[s] || "bg-gray-100 text-gray-700 border-gray-200"}`}>
+              {s.charAt(0).toUpperCase() + s.slice(1)}
+            </span>
+          );
+        };
+
         return (
-          <div className="p-4 sm:p-8">
-            <div className="mb-6">
-              <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-2">Work From Home</h1>
+          <div className="p-4 sm:p-8 space-y-8">
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Work From Home</h1>
               <p className="text-base sm:text-lg text-gray-600">Request and view your work from home days</p>
             </div>
-            <div className="mb-8">
+
+            <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Apply for Work From Home</h2>
               <WorkFromHomeRequest embedded={true} onSuccess={() => fetchEmployeeData({ showLoader: false })} />
             </div>
-            
+
+            <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+                <h2 className="text-xl font-semibold text-gray-800">My WFH History</h2>
+                <div className="flex gap-2 flex-wrap">
+                  {wfhFilterOptions.map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setWfhFilter(f)}
+                      className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                        wfhFilter === f
+                          ? "bg-blue-700 text-white"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      {f.charAt(0).toUpperCase() + f.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <DataTable
+                columns={[
+                  { name: "Sr.No", cell: (_, i) => i + 1, width: "75px" },
+                  {
+                    name: "From",
+                    selector: (r) => r.from_date,
+                    cell: (r) => r.from_date ? new Date(r.from_date).toLocaleDateString() : "—",
+                    sortable: true,
+                    grow: 1,
+                  },
+                  {
+                    name: "To",
+                    selector: (r) => r.to_date,
+                    cell: (r) => r.to_date ? new Date(r.to_date).toLocaleDateString() : "—",
+                    sortable: true,
+                    grow: 1,
+                  },
+                  { name: "Days", selector: (r) => r.number_of_days, sortable: true, width: "65px" },
+                  {
+                    name: "Reason",
+                    selector: (r) => (r.description || "").toLowerCase(),
+                    cell: (r) => (
+                      <span title={r.description} className="text-sm text-gray-700">
+                        {r.description || "—"}
+                      </span>
+                    ),
+                    grow: 2,
+                  },
+                  {
+                    name: "Status",
+                    selector: (r) => (r.status_text || r.status || "").toLowerCase(),
+                    cell: (r) => getWfhStatusBadge(r.status_text || r.status),
+                    sortable: true,
+                    grow: 1,
+                  },
+                  {
+                    name: "Applied On",
+                    selector: (r) => r.applied_date,
+                    cell: (r) => r.applied_date ? new Date(r.applied_date).toLocaleDateString() : "—",
+                    sortable: true,
+                    grow: 1,
+                  },
+                  {
+                    name: "Reviewed By",
+                    selector: (r) => (r.reviewed_by || "").toLowerCase(),
+                    cell: (r) => r.reviewed_by || "—",
+                    sortable: true,
+                    grow: 1,
+                  },
+                ]}
+                data={filteredWfh}
+                pagination
+                paginationRowsPerPageOptions={[5, 10, 25]}
+                customStyles={{
+                  headRow: { style: { backgroundColor: "#eff6ff", borderBottom: "2px solid #bfdbfe" } },
+                  headCells: { style: { color: "#374151", fontWeight: "600", fontSize: "13px" } },
+                  rows: { style: { "&:hover": { backgroundColor: "#f0f9ff" }, alignItems: "flex-start" } },
+                  cells: { style: { whiteSpace: "normal", wordBreak: "break-word", paddingTop: "10px", paddingBottom: "10px" } },
+                  pagination: { style: { borderTop: "1px solid #e2e8f0", backgroundColor: "#f8fafc" } },
+                }}
+                noDataComponent={
+                  <div className="text-center py-10 text-gray-500">
+                    No {wfhFilter === "all" ? "" : wfhFilter} WFH requests found.
+                  </div>
+                }
+              />
+            </div>
           </div>
         );
+      }
 
       default:
         return (

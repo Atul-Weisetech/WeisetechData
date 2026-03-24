@@ -1,6 +1,15 @@
-import React, { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
+import DataTable from "react-data-table-component";
 import API_BASE from "../config";
+
+const tableCustomStyles = {
+  headRow: { style: { backgroundColor: "#eff6ff", borderBottom: "2px solid #bfdbfe" } },
+  headCells: { style: { color: "#374151", fontWeight: "600", fontSize: "13px" } },
+  rows: { style: { "&:hover": { backgroundColor: "#f0f9ff" }, alignItems: "flex-start" } },
+  cells: { style: { whiteSpace: "normal", wordBreak: "break-word", paddingTop: "10px", paddingBottom: "10px" } },
+  pagination: { style: { borderTop: "1px solid #e2e8f0", backgroundColor: "#f8fafc" } },
+};
 
 export default function NotificationCenter({
   employeeId,
@@ -163,7 +172,7 @@ export default function NotificationCenter({
     }
 
     return (
-      <div className="max-h-[60vh] overflow-auto space-y-6">
+      <div className="space-y-6">
         {/* App notifications (payroll, performance warnings, etc.) */}
         {hasAppNotifications && (
           <div>
@@ -223,51 +232,88 @@ export default function NotificationCenter({
         {hasLeaveWfh && (
           <div>
             <h3 className="text-sm font-semibold text-gray-700 mb-2">Leave &amp; Work From Home</h3>
-            <table className="min-w-full text-sm">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="px-4 py-2 text-left">Status</th>
-                  <th className="px-4 py-2 text-left">Type</th>
-                  <th className="px-4 py-2 text-left">Date Range</th>
-                  <th className="px-4 py-2 text-left">Days</th>
-                  <th className="px-4 py-2 text-left">Description</th>
-                  <th className="px-4 py-2 text-left">Reviewed By</th>
-                  <th className="px-4 py-2 text-left">Reviewed At</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item) => {
-                  const statusInfo = getStatusInfo(item.status_text || item.status);
-                  const typeLabel = item.type === "wfh" ? "WFH" : "Leave";
-                  const typeClass = item.type === "wfh"
-                    ? "bg-sky-100 text-sky-800 border-sky-200"
-                    : "bg-slate-100 text-slate-800 border-slate-200";
-                  return (
-                    <tr key={`${item.type}-${item.id}`} className="border-t">
-                      <td className="px-4 py-2">
-                        <span
-                          className={`px-3 py-1 rounded-full border ${statusInfo.className}`}
-                        >
-                          {statusInfo.label}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2">
-                        <span className={`px-2 py-1 rounded border text-xs font-medium ${typeClass}`}>
-                          {typeLabel}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2">
-                        {item.from_date} → {item.to_date}
-                      </td>
-                      <td className="px-4 py-2">{item.number_of_days}</td>
-                      <td className="px-4 py-2">{item.description}</td>
-                      <td className="px-4 py-2">{item.reviewed_by || "—"}</td>
-                      <td className="px-4 py-2">{formatDate(item.reviewed_at)}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <DataTable
+              columns={[
+                {
+                  name: "Status",
+                  selector: (row) => (row.status_text || row.status || "").toLowerCase(),
+                  cell: (row) => {
+                    const info = getStatusInfo(row.status_text || row.status);
+                    return (
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${info.className}`}>
+                        {info.label}
+                      </span>
+                    );
+                  },
+                  sortable: true,
+                  grow: 1,
+                },
+                {
+                  name: "Type",
+                  selector: (row) => row.type,
+                  cell: (row) => (
+                    <span className={`px-2 py-0.5 rounded border text-xs font-medium ${
+                      row.type === "wfh"
+                        ? "bg-sky-100 text-sky-800 border-sky-200"
+                        : "bg-slate-100 text-slate-800 border-slate-200"
+                    }`}>
+                      {row.type === "wfh" ? "WFH" : "Leave"}
+                    </span>
+                  ),
+                  sortable: true,
+                  width: "80px",
+                },
+                {
+                  name: "Date Range",
+                  selector: (row) => row.from_date,
+                  cell: (row) => (
+                    <span className="text-sm text-gray-700">
+                      {row.from_date ? new Date(row.from_date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
+                      {" → "}
+                      {row.to_date ? new Date(row.to_date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
+                    </span>
+                  ),
+                  sortable: true,
+                  grow: 2,
+                },
+                {
+                  name: "Days",
+                  selector: (row) => row.number_of_days,
+                  sortable: true,
+                  width: "70px",
+                },
+                {
+                  name: "Description",
+                  selector: (row) => (row.description || "").toLowerCase(),
+                  cell: (row) => (
+                    <span title={row.description} className="text-sm text-gray-700">
+                      {row.description || "—"}
+                    </span>
+                  ),
+                  grow: 2,
+                },
+                {
+                  name: "Reviewed By",
+                  selector: (row) => (row.reviewed_by || "").toLowerCase(),
+                  cell: (row) => <span className="text-sm text-gray-700">{row.reviewed_by || "—"}</span>,
+                  sortable: true,
+                  grow: 1,
+                },
+                {
+                  name: "Reviewed At",
+                  selector: (row) => row.reviewed_at,
+                  cell: (row) => <span className="text-sm text-gray-600">{formatDate(row.reviewed_at)}</span>,
+                  sortable: true,
+                  grow: 1,
+                },
+              ]}
+              data={items}
+              keyField={(row) => `${row.type}-${row.id}`}
+              customStyles={tableCustomStyles}
+              pagination
+              paginationRowsPerPageOptions={[5, 10, 25]}
+              noDataComponent={<div className="text-center py-8 text-gray-400">No leave or WFH requests found.</div>}
+            />
           </div>
         )}
       </div>

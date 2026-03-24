@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/weisetechLogo.png";
 import CustomConfirmDialog from "./CustomConfirmDialog";
@@ -13,6 +13,24 @@ export default function Navbar({
 }) {
   const navigate = useNavigate();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [dropdownOpen, setDropdownOpen]           = useState(false);
+  const dropdownRef                               = useRef(null);
+
+  const userName    = localStorage.getItem("name") || "User";
+  const designation = localStorage.getItem("designation") || "";
+  const role        = localStorage.getItem("role") || "";
+  const initials    = userName.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("user");
@@ -23,7 +41,7 @@ export default function Navbar({
   };
 
   const formatTime = (seconds) => {
-    const hrs = Math.floor(seconds / 3600);
+    const hrs  = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
     return `${hrs.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
@@ -61,7 +79,6 @@ export default function Navbar({
                 : "bg-blue-600 hover:bg-blue-700 text-white"
             }`}
           >
-            {/* <span>⏱️</span> */}
             <div className="flex flex-col items-start">
               <span className="text-sm">Time Tracker</span>
               {timerState.isTracking && (
@@ -75,15 +92,6 @@ export default function Navbar({
             )}
           </button>
         )}
-
-        {/* Apply for Leave Button */}
-        {/* <button
-          onClick={onShowLeaveRequest}
-          className="flex items-center gap-3 py-2 px-4 rounded-xl font-semibold bg-purple-600 hover:bg-purple-700 text-white transition-all duration-300 shadow-md hover:shadow-lg"
-        >
-          <span>🏖️</span>
-          <span className="text-sm">Apply for Leave</span>
-        </button> */}
 
         {/* Notification Bell */}
         {onNotificationClick && (
@@ -104,15 +112,56 @@ export default function Navbar({
           </button>
         )}
 
-        {/* Logout Button — hidden on mobile (shown in sidebar drawer instead) */}
-        <button
-          onClick={() => setShowLogoutConfirm(true)}
-          className="hidden lg:block bg-gradient-to-r from-red-500 to-red-700 text-white px-4 sm:px-5 py-2 rounded-xl font-semibold hover:from-red-600 hover:to-red-800 transition-all duration-300 shadow-md hover:shadow-lg"
-        >
-          Logout
-        </button>
-      </div>
+        {/* User Avatar Dropdown */}
+        <div className="relative" ref={dropdownRef}>
+          <button
+            onClick={() => setDropdownOpen((prev) => !prev)}
+            className="flex items-center gap-2 px-2 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 shadow-sm transition-all"
+          >
+            <div className="w-8 h-8 rounded-full bg-primary-600 text-white flex items-center justify-center text-sm font-bold shrink-0">
+              {initials}
+            </div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""}`}
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
 
+          {dropdownOpen && (
+            <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-100 z-50 overflow-hidden">
+              {/* User info section */}
+              <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100">
+                <div className="w-10 h-10 rounded-full bg-primary-600 text-white flex items-center justify-center text-sm font-bold shrink-0">
+                  {initials}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-gray-800 truncate">{userName}</p>
+                  {designation && <p className="text-xs text-gray-500 truncate">{designation}</p>}
+                  {role && (
+                    <span className="inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full bg-primary-50 text-primary-700 capitalize">
+                      {role}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Logout */}
+              <button
+                onClick={() => { setDropdownOpen(false); setShowLogoutConfirm(true); }}
+                className="w-full flex items-center gap-2 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" />
+                </svg>
+                Logout
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
     </nav>
 
     <CustomConfirmDialog

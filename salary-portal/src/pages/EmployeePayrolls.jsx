@@ -9,7 +9,8 @@ import API_BASE from "../config";
 const tableCustomStyles = {
   headRow: { style: { backgroundColor: "#eff6ff", borderBottom: "2px solid #bfdbfe" } },
   headCells: { style: { color: "#374151", fontWeight: "600", fontSize: "13px" } },
-  rows: { style: { "&:hover": { backgroundColor: "#f0f9ff" } } },
+  rows: { style: { "&:hover": { backgroundColor: "#f0f9ff" }, alignItems: "flex-start" } },
+  cells: { style: { whiteSpace: "normal", wordBreak: "break-word", paddingTop: "10px", paddingBottom: "10px" } },
   pagination: { style: { borderTop: "1px solid #e2e8f0", backgroundColor: "#f8fafc" } },
 };
 
@@ -92,6 +93,7 @@ export default function EmployeePayrolls() {
     {
       name: "Month",
       selector: (row) => row.pay_month,
+      sortFunction: (a, b) => (a.pay_month || "").toLowerCase().localeCompare((b.pay_month || "").toLowerCase()),
       sortable: true,
     },
     {
@@ -108,6 +110,7 @@ export default function EmployeePayrolls() {
     {
       name: "Payment Mode",
       selector: (row) => row.mode_of_payment,
+      sortFunction: (a, b) => (a.mode_of_payment || "").toLowerCase().localeCompare((b.mode_of_payment || "").toLowerCase()),
       sortable: true,
     },
     {
