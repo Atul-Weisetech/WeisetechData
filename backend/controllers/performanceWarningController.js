@@ -418,6 +418,12 @@ const deletePerformanceWarning = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Invalid warning ID' });
     }
 
+    // Delete associated employee notification first
+    await query(
+      `DELETE FROM ${NOTIFICATIONS_TABLE} WHERE type = 'performance_warning' AND reference_id = ?`,
+      [warning_id]
+    );
+
     await query(`DELETE FROM ${TABLE} WHERE id = ?`, [warning_id]);
     // Warning types will be deleted automatically due to CASCADE
 

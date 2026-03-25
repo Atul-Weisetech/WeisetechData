@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { RefreshCw, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { FaArrowLeft } from 'react-icons/fa';
 import axios from 'axios';
 import DataTable from 'react-data-table-component';
@@ -79,7 +79,7 @@ function ViewPerformanceWarnings({ onBack }) {
       const fullWarning = res.data?.data;
       setEditingId(warning.id);
       setEditForm({
-        overall_notes: fullWarning?.overall_notes || '',
+        overall_notes: fullWarning?.overall_notes || fullWarning?.overall_note || '',
         warning_types: fullWarning?.warning_types
           ? fullWarning.warning_types.map((wt) => ({
               warning_type: typeof wt === 'string' ? wt : wt.warning_type || '',
@@ -158,8 +158,13 @@ function ViewPerformanceWarnings({ onBack }) {
     {
       name: "Employee",
       selector: (row) => row.employee_name || `Employee ${row.employee_id}`,
+      sortFunction: (a, b) => {
+        const nameA = (a.employee_name || `Employee ${a.employee_id}`).toLowerCase();
+        const nameB = (b.employee_name || `Employee ${b.employee_id}`).toLowerCase();
+        return nameA.localeCompare(nameB);
+      },
       cell: (row) => (
-        <div className="text-sm font-medium text-gray-900">
+        <div className="text-sm font-medium text-gray-900 capitalize">
           {row.employee_name || `Employee ${row.employee_id}`}
         </div>
       ),
@@ -179,9 +184,14 @@ function ViewPerformanceWarnings({ onBack }) {
                   className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-primary-500"
                 >
                   <option value="">-- Select type --</option>
-                  {warningTypes.map((type) => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
+                  {warningTypes
+                    .filter((type) =>
+                      type === wt.warning_type ||
+                      !editForm.warning_types.some((other, i) => i !== idx && other.warning_type === type)
+                    )
+                    .map((type) => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
                 </select>
                 <textarea
                   value={wt.description}
@@ -234,6 +244,20 @@ function ViewPerformanceWarnings({ onBack }) {
     {
       name: "Created By",
       selector: (row) => row.created_by || '—',
+      cell: (row) => {
+        const val = row.created_by || '';
+        const lower = val.toLowerCase();
+        const isAdmin = lower.includes('admin');
+        const isHR = lower.includes('hr') || lower === 'hr/admin';
+        const badgeClass = isAdmin
+          ? 'bg-red-100 text-red-700 border border-red-200'
+          : isHR
+          ? 'bg-blue-100 text-blue-700 border border-blue-200'
+          : 'bg-gray-100 text-gray-700 border border-gray-200';
+        return val ? (
+          <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${badgeClass}`}>{val}</span>
+        ) : <span className="text-gray-400 text-xs">—</span>;
+      },
       sortable: true,
       grow: 1,
     },
@@ -248,38 +272,45 @@ function ViewPerformanceWarnings({ onBack }) {
       name: "Actions",
       cell: (row) =>
         editingId === row.id ? (
-          <div className="flex gap-1.5">
+          <div className="flex flex-row flex-nowrap gap-2">
             <button
               onClick={() => handleSaveEdit(row.id)}
-              className="px-2.5 py-1 text-xs rounded bg-green-600 text-white hover:bg-green-700 transition-colors"
+              className="bg-primary-600 text-white px-3 py-1 rounded hover:bg-primary-700 font-medium text-xs whitespace-nowrap"
             >
               Save
             </button>
             <button
               onClick={handleCancelEdit}
-              className="px-2.5 py-1 text-xs rounded bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+              className="border border-gray-300 text-gray-600 bg-gray-200 px-3 py-1 rounded hover:bg-gray-300 font-medium text-xs whitespace-nowrap"
             >
               Cancel
             </button>
           </div>
         ) : (
-          <div className="flex gap-1.5">
-            <button
-              onClick={() => handleEdit(row)}
-              className="px-2.5 py-1 text-xs rounded bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
-            >
-              Edit
-            </button>
+          <div className="flex flex-row flex-nowrap gap-2">
+            {(() => {
+              const created = row.created_at ? new Date(row.created_at) : null;
+              const within24h = created && (Date.now() - created.getTime()) < 24 * 60 * 60 * 1000;
+              return within24h ? (
+                <button
+                  onClick={() => handleEdit(row)}
+                  className="border border-gray-300 text-gray-600 bg-gray-200 px-3 py-1 rounded hover:bg-gray-300 font-medium text-xs whitespace-nowrap"
+                >
+                  Edit
+                </button>
+              ) : null;
+            })()}
             <button
               onClick={() => handleDelete(row.id)}
-              className="px-2.5 py-1 text-xs rounded bg-red-600 text-white hover:bg-red-700 transition-colors"
+              className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 font-medium text-xs whitespace-nowrap"
             >
               Delete
             </button>
           </div>
         ),
       ignoreRowClick: true,
-      grow: 1,
+      minWidth: "160px",
+      grow: 0,
     },
   ];
 
@@ -296,12 +327,6 @@ function ViewPerformanceWarnings({ onBack }) {
           </button>
         </div>
       )}
-
-      <div className="mb-4 flex justify-end">
-        <button onClick={fetchWarnings} className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors">
-          <RefreshCw size={14} className="inline mr-1.5" /> Refresh
-        </button>
-      </div>
 
       {error && (
         <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">{error}</div>
@@ -353,11 +378,15 @@ function ViewPerformanceWarnings({ onBack }) {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="text-sm font-medium text-gray-600">Employee Name</label>
-                        <p className="text-base text-gray-900 mt-1">{detailWarning.employee?.name || detailWarning.employee_name || '—'}</p>
+                        <p className="text-base text-gray-900 mt-1 capitalize">{detailWarning.employee?.name || detailWarning.employee_name || '—'}</p>
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-600">Employee ID</label>
                         <p className="text-base text-gray-900 mt-1">{detailWarning.employee?.id || detailWarning.employee_id || '—'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Role / Designation</label>
+                        <p className="text-base text-gray-900 mt-1">{detailWarning.employee?.designation || detailWarning.employee?.role || detailWarning.designation || '—'}</p>
                       </div>
                     </div>
                   </div>

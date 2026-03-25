@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { FaArrowLeft } from 'react-icons/fa';
 import { useNotification } from '../contexts/NotificationContext';
+import API_BASE from '../config';
 
 const initialWarningRow = () => ({ warning_type: '', notes: '' });
 
@@ -42,7 +44,7 @@ function CreatePerformanceWarning({ onCancel, onSuccess }) {
 
   const fetchEmployees = async () => {
     try {
-      const res = await axios.get('https://weisetechdata.onrender.com/api/employees');
+      const res = await axios.get(`${API_BASE}/api/employees`);
       setEmployees(res.data || []);
     } catch (error) {
       console.error('Error fetching employees:', error);
@@ -97,7 +99,7 @@ function CreatePerformanceWarning({ onCancel, onSuccess }) {
       }));
 
       // Create single warning with multiple warning types
-      const response = await axios.post('https://weisetechdata.onrender.com/api/performance-warnings', {
+      const response = await axios.post(`${API_BASE}/api/performance-warnings`, {
         employee_id: parseInt(employeeId),
         employee_name: employee_name || `Employee ${employeeId}`,
         overall_notes: overallNotes || '',
@@ -109,7 +111,7 @@ function CreatePerformanceWarning({ onCancel, onSuccess }) {
       
       // Show notification if employee already has previous warnings
       if (previousCount > 0) {
-        showWarning(`⚠️ This employee already has ${previousCount} performance warning(s).`);
+        showWarning(`This employee already has ${previousCount} performance warning(s).`);
         // Show success notification after a short delay
         setTimeout(() => {
           showSuccess('Performance warning created successfully!');
@@ -137,17 +139,15 @@ function CreatePerformanceWarning({ onCancel, onSuccess }) {
 
   return (
     <div className="p-6 w-full">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Performance Warning</h1>
-          <p className="text-lg text-gray-600">Issue a performance warning to an employee</p>
-        </div>
+      <div className="flex items-center justify-between mb-6">
         <button
           onClick={onCancel}
-          className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors"
+          className="flex items-center gap-2 text-gray-600 hover:text-blue-700 transition text-sm font-medium"
         >
-          ← Back
+          <FaArrowLeft size={13} /> Back
         </button>
+        <h2 className="text-xl font-semibold text-blue-700">Create Performance Warning</h2>
+        <div className="w-16" />
       </div>
 
       <div className="bg-white rounded-xl shadow-lg p-6 w-full">
@@ -171,11 +171,14 @@ function CreatePerformanceWarning({ onCancel, onSuccess }) {
               required
             >
               <option value="">-- Select Employee --</option>
-              {employees.map((emp) => (
-                <option key={emp.employee_id} value={emp.employee_id}>
-                  {emp.first_name} {emp.last_name}
-                </option>
-              ))}
+              {employees.map((emp) => {
+                const cap = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '';
+                return (
+                  <option key={emp.employee_id} value={emp.employee_id}>
+                    {cap(emp.first_name)} {cap(emp.last_name)}
+                  </option>
+                );
+              })}
             </select>
           </div>
 
@@ -222,11 +225,14 @@ function CreatePerformanceWarning({ onCancel, onSuccess }) {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     >
                       <option value="">-- Select type --</option>
-                      {warningTypes.map((type) => (
-                        <option key={type} value={type}>
-                          {type}
-                        </option>
-                      ))}
+                      {warningTypes
+                        .filter((type) =>
+                          type === row.warning_type ||
+                          !warnings.some((w, i) => i !== index && w.warning_type === type)
+                        )
+                        .map((type) => (
+                          <option key={type} value={type}>{type}</option>
+                        ))}
                     </select>
                   </div>
                   {row.warning_type && (
@@ -262,18 +268,18 @@ function CreatePerformanceWarning({ onCancel, onSuccess }) {
           </div>
 
           {/* Submit Buttons */}
-          <div className="flex gap-4 pt-4">
+          <div className="flex items-center gap-3 mt-2">
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-primary-600 text-white px-6 py-2 rounded hover:bg-primary-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Creating...' : 'Create Warning'}
             </button>
             <button
               type="button"
               onClick={onCancel}
-              className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition-colors"
+              className="w-40 border border-gray-300 text-gray-600 bg-gray-200 px-6 py-2 rounded hover:bg-gray-300 font-medium"
             >
               Cancel
             </button>

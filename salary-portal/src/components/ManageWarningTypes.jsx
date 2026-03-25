@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
+import { useNotification } from '../contexts/NotificationContext';
 
-function ManageWarningTypes({ onClose }) {const defaultTypes = [    'Attendance Issue',
+function ManageWarningTypes({ onClose }) {
+  const { showConfirm } = useNotification();
+  const defaultTypes = [    'Attendance Issue',
     'Performance Issue',
     'Behavioral Issue',
     'Policy Violation',
@@ -85,23 +88,21 @@ function ManageWarningTypes({ onClose }) {const defaultTypes = [    'Attendance 
   };
 
   const handleDelete = (index) => {
-    if (defaultTypes.includes(warningTypes[index])) {
-      if (!window.confirm('This is a default warning type. Are you sure you want to remove it?')) {
-        return;
-      }
-    } else {
-      if (!window.confirm('Are you sure you want to delete this warning type?')) {
-        return;
-      }
-    }
-    const updated = warningTypes.filter((_, i) => i !== index);
-    saveWarningTypes(updated);
+    const message = defaultTypes.includes(warningTypes[index])
+      ? 'This is a default warning type. Are you sure you want to remove it?'
+      : 'Are you sure you want to delete this warning type?';
+    showConfirm(message, () => {
+      const updated = warningTypes.filter((_, i) => i !== index);
+      saveWarningTypes(updated);
+    }, () => {});
   };
 
   const handleReset = () => {
-    if (window.confirm('Reset to default warning types? This will remove all custom types.')) {
-      saveWarningTypes(defaultTypes);
-    }
+    showConfirm(
+      'Reset to default warning types? This will remove all custom types.',
+      () => saveWarningTypes(defaultTypes),
+      () => {}
+    );
   };
 
   return (
