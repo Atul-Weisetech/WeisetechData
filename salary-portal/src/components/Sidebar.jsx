@@ -128,7 +128,8 @@ export default function Sidebar({ onSelect, className = "" }) {
           {pendingCount > 0 && (role === "admin" || role === "hr") && (
             <>
               <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-ping opacity-75"></span>
-              <span className="ml-auto flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold rounded-full bg-red-500 text-white border border-white">
+              <span className="ml-auto flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold
+               rounded-full bg-red-500 text-white border border-white">
                 {pendingCount}
               </span>
             </>

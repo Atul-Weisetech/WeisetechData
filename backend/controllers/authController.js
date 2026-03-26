@@ -2,26 +2,44 @@ const db = require('../config/db');
 
 // Add HR with role = 1 (HR)
 exports.addHR = (req, res) => {
-  const { email, password } = req.body;
+  const { firstname, lastname, email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ error: 'Email and password are required' });
   }
 
   const normalizedEmail = String(email).trim().toLowerCase();
+  const normalizedPassword = String(password).trim();
+  const firstName = String(firstname || '').trim();
+  const lastName = String(lastname || '').trim();
 
   db.query(
     'SELECT * FROM tbl_user WHERE email_address = ?',
     [normalizedEmail],
     (err, results) => {
       if (err) return res.status(500).json({ error: err?.sqlMessage || 'Database error' });
-      if (results.length > 0) return res.status(400).json({ error: 'HR already exists' });
+      if (results.length > 0) return res.status(400).json({ error: 'An account with this email already exists' });
 
       db.query(
-        'INSERT INTO tbl_user (email_address, password, user_role) VALUES (?, ?, ?)',
-        [normalizedEmail, String(password).trim(), 1], // 1 = HR
+        'INSERT INTO tbl_user (email_address, password, user_role, first_name, last_name, is_active) VALUES (?, ?, ?, ?, ?, ?)',
+        [normalizedEmail, normalizedPassword, 1, firstName, lastName, 1], // user_role 1 = HR
         (err2) => {
-          if (err2) return res.status(500).json({ error: err2?.sqlMessage || 'Database error' });
-          res.json({ message: 'HR added successfully' });
+          if (err2) {
+            // Fallback: insert without first_name/last_name if columns don't exist
+            if (err2.code === 'ER_BAD_FIELD_ERROR') {
+              db.query(
+                'INSERT INTO tbl_user (email_address, password, user_role, is_active) VALUES (?, ?, ?, ?)',
+                [normalizedEmail, normalizedPassword, 1, 1],
+                (err3) => {
+                  if (err3) return res.status(500).json({ error: err3?.sqlMessage || 'Database error' });
+                  res.json({ message: 'HR added successfully' });
+                }
+              );
+            } else {
+              return res.status(500).json({ error: err2?.sqlMessage || 'Database error' });
+            }
+          } else {
+            res.json({ message: 'HR added successfully' });
+          }
         }
       );
     }

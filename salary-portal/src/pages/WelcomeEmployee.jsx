@@ -7,7 +7,14 @@ import {
   FaCalendarAlt,
   FaHome,
   FaDownload,
+  FaClock,
+  FaCalendarPlus,
+  FaBuilding,
+  FaUserTie,
+  FaArrowRight,
+  FaFileInvoiceDollar,
 } from "react-icons/fa";
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import LeaveRequest from "../components/LeaveRequest";
 import EmployeeTimeTracker from "../components/EmployeeTimeTracker";
 import WorkFromHomeRequest from "../components/WorkFromHomeRequest";
@@ -18,6 +25,14 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 import DataTable from "react-data-table-component";
 import API_BASE from "../config";
+
+const getGreeting = () => {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12) return "Good Morning";
+  if (h >= 12 && h < 17) return "Good Afternoon";
+  if (h >= 17 && h < 21) return "Good Evening";
+  return "Good Night";
+};
 
 function WelcomeEmployee() {
   const [payrolls, setPayrolls] = useState([]);
@@ -62,7 +77,9 @@ function WelcomeEmployee() {
     setNotificationCount(unreadAppNotificationsCount + Math.max(0, reviewedUpdatesCount - lastSeenReviewedCount));
   }, [unreadAppNotificationsCount, reviewedUpdatesCount, lastSeenReviewedCount, setNotificationCount]);
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+  const [isWFHModalOpen, setIsWFHModalOpen] = useState(false);
   const [isTimeTrackerOpen, setIsTimeTrackerOpen] = useState(false);
+  const [department, setDepartment] = useState("");
   const [timerState, setTimerState] = useState({
     isTracking: false, elapsedTime: 0, startTime: "",
     activityLogs: [], currentActivityType: "Working time",
@@ -121,9 +138,7 @@ function WelcomeEmployee() {
           : employeeRes.data;
 
         if (employeeData) {
-          const joinDate =
-            normalizeDateValue(employeeData.joining_date) ||
-            new Date().toISOString().split("T")[0];
+          const joinDate = normalizeDateValue(employeeData.joining_date) || "";
           setJoiningDate(joinDate);
 
           const leaveRes = await axios.get(
@@ -190,6 +205,8 @@ function WelcomeEmployee() {
     if (storedName) setEmployeeName(storedName);
     const storedDesignation = localStorage.getItem("designation");
     if (storedDesignation) setDesignation(storedDesignation);
+    const storedDept = localStorage.getItem("department");
+    if (storedDept) setDepartment(storedDept);
 
     fetchEmployeeData();
 
@@ -363,164 +380,285 @@ function WelcomeEmployee() {
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: <FaTachometerAlt size={20} /> },
     { id: "payrolls", label: "Payrolls", icon: <FaMoneyBillWave size={20} /> },
-    { id: "notifications", label: "Notifications", icon: <FaBell size={20} />, showUpdateBadge: true },
+    { id: "notifications", label: "Notifications", icon: <FaBell size={20} />},
     { id: "leave-requests", label: "Leave Requests", icon: <FaCalendarAlt size={20} /> },
     { id: "work-from-home", label: "Work From Home", icon: <FaHome size={20} /> },
   ];
 
   const renderContent = () => {
     switch (activeSection) {
-      case "dashboard":
+      case "dashboard": {
+        const leaveChartData = [
+          { name: "Used", value: leaveUsed, color: "#ef4444" },
+          { name: "Remaining", value: remainingLeaves, color: "#22c55e" },
+          { name: "Pending", value: pendingLeaves, color: "#f97316" },
+        ].filter((d) => d.value > 0);
+        const recentPayrolls = [...payrolls].sort((a, b) => b.id - a.id).slice(0, 4);
+        const todayHrs = Math.floor(timerState.elapsedTime / 3600);
+        const todayMins = Math.floor((timerState.elapsedTime % 3600) / 60);
+
         return (
-          <div className="p-8 ">
-            {/* Welcome Header */}
-            <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-none">
+          <div className="p-6 lg:p-8 space-y-6">
+
+            {/* Header: Greeting + Quick Actions */}
+            <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                  Welcome back, {employeeName}!
+                <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
+                  {getGreeting()}, {employeeName.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ")}! 👋
                 </h1>
-                <p className="text-lg text-gray-600">
-                  Here's your overview for today
+                <p className="text-gray-500 mt-1 text-sm lg:text-base">
+                  Hope you have a productive day ahead ✨
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
-                {/* <button
-                  onClick={() => setActiveSection("notifications")}
-                  className="px-5 py-3 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm"
-                >
-                  View Notifications
-                </button> */}
-                {/* <button
+                <button
                   onClick={() => setIsLeaveModalOpen(true)}
-                  className="px-5 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold shadow-md transition-colors"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-primary-200 bg-primary-50 hover:bg-primary-100 text-primary-700 text-sm font-semibold transition-colors shadow-sm"
                 >
-                  Apply for Leave
-                </button> */}
+                  <FaCalendarPlus size={14} /> Apply Leave
+                </button>
+                <button
+                  onClick={() => setIsWFHModalOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-sky-200 bg-sky-50 hover:bg-sky-100 text-sky-700 text-sm font-semibold transition-colors shadow-sm"
+                >
+                  <FaHome size={14} /> Request WFH
+                </button>
                 <button
                   onClick={() => setIsTimeTrackerOpen(true)}
-                  className="px-5 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold shadow-md transition-colors"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold transition-colors shadow-md"
                 >
-                  Open Time Tracker
+                  <FaClock size={14} />
+                  {timerState.isTracking
+                    ? `${String(todayHrs).padStart(2,"0")}:${String(todayMins).padStart(2,"0")} Tracking`
+                    : "Open Time Tracker"}
                 </button>
               </div>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              {/* Leave Balance Card */}
-              <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-700">
-                    Leave Balance
-                  </h3>
-                  {/* <span className="text-2xl">🏖️</span> */}
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-3xl font-bold text-indigo-600">
-                      {remainingLeaves}
-                    </p>
-                    <p className="text-sm text-gray-500">Remaining Leaves</p>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Total: {totalLeaves}</span>
-                    <span className="text-gray-600">Used: {leaveUsed}</span>
-                    <span className="text-orange-600">
-                      Pending: {pendingLeaves}
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-green-500 h-2 rounded-full transition-all duration-500"
-                      style={{
-                        width: `${Math.min(
-                          100,
-                          Math.max(0, (remainingLeaves / totalLeaves) * 100)
-                        )}%`,
-                      }}
-                    ></div>
-                  </div>
-                </div>
+            {/* Profile Summary Card */}
+            <div className="bg-gradient-to-r from-primary-600 to-primary-400 rounded-2xl p-5 text-white flex flex-wrap items-center gap-6">
+              <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                <FaUserTie size={24} className="text-white" />
               </div>
-
-              {/* Quick Stats Card 1 */}
-              <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-700">
-                    Payslips
-                  </h3>
-                  {/* <span className="text-2xl">💰</span> */}
-                </div>
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-purple-600">
-                    {payrolls.length}
-                  </p>
-                  <p className="text-sm text-gray-500">Available Payslips</p>
-                </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-primary-100 text-xs font-medium uppercase tracking-wider">Employee Profile</p>
+                <h2 className="text-xl font-bold mt-0.5">{employeeName ? employeeName.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ") : "—"}</h2>
               </div>
-
-              {/* Quick Stats Card 2 */}
-              <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-700">
-                    This Month
-                  </h3>
-                  {/* <span className="text-2xl">📅</span> */}
-                </div>
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-cyan-600">
-                    {new Date().getDate()}
+              <div className="flex flex-wrap gap-6 text-sm">
+                <div>
+                  <p className="text-primary-200 text-xs uppercase tracking-wider">Designation</p>
+                  <p className="font-semibold mt-0.5 flex items-center gap-1.5">
+                    <FaUserTie size={11} className="text-primary-200" />
+                    {designation || "—"}
                   </p>
-                  <p className="text-sm text-gray-500">Days Completed</p>
+                </div>
+                {/* <div>
+                  <p className="text-primary-200 text-xs uppercase tracking-wider">Department</p>
+                  <p className="font-semibold mt-0.5 flex items-center gap-1.5">
+                    <FaBuilding size={11} className="text-primary-200" />
+                    {department || "—"}
+                  </p>
+                </div> */}
+                <div>
+                  <p className="text-primary-200 text-xs uppercase tracking-wider">Joining Date</p>
+                  <p className="font-semibold mt-0.5 flex items-center gap-1.5">
+                    <FaCalendarAlt size={11} className="text-primary-200" />
+                    {joiningDate
+                      ? new Date(joiningDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
+                      : "—"}
+                  </p>
                 </div>
               </div>
             </div>
+            
 
-            {/* Recent Payslips Section */}
-            <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-gray-800">
-                  Recent Payslips
-                </h3>
+            {/* Stats Row — 3 equal cards spanning full width */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Leave Balance */}
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 lg:p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[11px] lg:text-xs font-semibold text-gray-500 uppercase tracking-wider">Leave Balance</span>
+                  <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-green-100 flex items-center justify-center shrink-0">
+                    <FaCalendarAlt size={13} className="text-green-600 lg:hidden" />
+                    <FaCalendarAlt size={16} className="text-green-600 hidden lg:block" />
+                  </div>
+                </div>
+                <p className="text-2xl lg:text-3xl 2xl:text-4xl font-bold text-green-600">{remainingLeaves}</p>
+                <p className="text-[11px] lg:text-xs text-gray-400 mt-0.5">days remaining</p>
+                <div className="w-full bg-gray-100 rounded-full h-1.5 mt-3">
+                  <div
+                    className="bg-green-500 h-1.5 rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(100, Math.max(0, (remainingLeaves / totalLeaves) * 100))}%` }}
+                  />
+                </div>
+                <div className="flex justify-between text-[11px] lg:text-xs text-gray-400 mt-1.5">
+                  <span>Used: {leaveUsed}</span>
+                  <span className="text-orange-500">Pending: {pendingLeaves}</span>
+                </div>
+              </div>
+
+              {/* Payslips */}
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 lg:p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[11px] lg:text-xs font-semibold text-gray-500 uppercase tracking-wider">Payslips</span>
+                  <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-purple-100 flex items-center justify-center shrink-0">
+                    <FaMoneyBillWave size={13} className="text-purple-600 lg:hidden" />
+                    <FaMoneyBillWave size={16} className="text-purple-600 hidden lg:block" />
+                  </div>
+                </div>
+                <p className="text-2xl lg:text-3xl 2xl:text-4xl font-bold text-purple-600">{payrolls.length}</p>
+                <p className="text-[11px] lg:text-xs text-gray-400 mt-0.5">available payslips</p>
                 <button
                   onClick={() => setActiveSection("payrolls")}
-                  className="text-indigo-600 hover:text-indigo-700 font-medium"
+                  className="mt-3 flex items-center gap-1 text-[11px] lg:text-xs text-primary-600 font-medium hover:text-primary-700"
                 >
-                  View All →
+                  View all <FaArrowRight size={9} />
+                </button>
+              </div>
+
+              {/* Days This Month */}
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 lg:p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[11px] lg:text-xs font-semibold text-gray-500 uppercase tracking-wider">This Month</span>
+                  <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl bg-cyan-100 flex items-center justify-center shrink-0">
+                    <FaFileInvoiceDollar size={13} className="text-cyan-600 lg:hidden" />
+                    <FaFileInvoiceDollar size={16} className="text-cyan-600 hidden lg:block" />
+                  </div>
+                </div>
+                <p className="text-2xl lg:text-3xl 2xl:text-4xl font-bold text-cyan-600">{new Date().getDate()}</p>
+                <p className="text-[11px] lg:text-xs text-gray-400 mt-0.5">days completed</p>
+                <p className="text-[11px] lg:text-xs text-gray-400 mt-3">
+                  {new Date().toLocaleString("en-IN", { month: "long", year: "numeric" })}
+                </p>
+              </div>
+            </div>
+
+            {/* Analytics Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Leave Usage Chart */}
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Leave Usage</h3>
+                {leaveChartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={200}>
+                    <PieChart>
+                      <Pie
+                        data={leaveChartData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={55}
+                        outerRadius={80}
+                        paddingAngle={3}
+                        dataKey="value"
+                      >
+                        {leaveChartData.map((entry, i) => (
+                          <Cell key={i} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(v, n) => [`${v} days`, n]} />
+                      <Legend iconType="circle" iconSize={8} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-48 text-gray-400 text-sm">
+                    No leave data available
+                  </div>
+                )}
+                <div className="flex justify-around mt-1 text-xs text-center text-gray-500">
+                  <div><p className="font-bold text-red-500 text-base">{leaveUsed}</p><p>Used</p></div>
+                  <div><p className="font-bold text-green-500 text-base">{remainingLeaves}</p><p>Remaining</p></div>
+                  <div><p className="font-bold text-orange-500 text-base">{pendingLeaves}</p><p>Pending</p></div>
+                </div>
+              </div>
+
+              {/* Working Hours Today */}
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Today's Working Hours</h3>
+                <div className="flex flex-col items-center justify-center h-44">
+                  <div className={`w-32 h-32 rounded-full border-8 flex items-center justify-center ${
+                    timerState.isTracking ? "border-green-400" : "border-gray-200"
+                  }`}>
+                    <div className="text-center">
+                      <FaClock size={20} className={timerState.isTracking ? "text-green-500 mx-auto mb-1" : "text-gray-400 mx-auto mb-1"} />
+                      <p className="text-xl font-bold font-mono text-gray-800">
+                        {String(todayHrs).padStart(2,"0")}:{String(todayMins).padStart(2,"0")}
+                      </p>
+                    </div>
+                  </div>
+                  <p className={`mt-4 text-sm font-medium ${timerState.isTracking ? "text-green-600" : "text-gray-400"}`}>
+                    {timerState.isTracking ? "Session in progress" : "No active session"}
+                  </p>
+                  {timerState.activityLogs.length > 0 && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      {timerState.activityLogs.length} activit{timerState.activityLogs.length === 1 ? "y" : "ies"} logged
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={() => setIsTimeTrackerOpen(true)}
+                  className="w-48 mx-auto mt-2 flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 rounded-xl text-sm transition-colors"
+                >
+                  <FaClock size={13} />
+                  {timerState.isTracking ? "View Tracker" : "Start Tracking"}
+                </button>
+              </div>
+            </div>
+
+            {/* Recent Payslips */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Recent Payslips</h3>
+                <button
+                  onClick={() => setActiveSection("payrolls")}
+                  className="flex items-center gap-1 text-xs text-primary-600 font-medium hover:text-primary-700"
+                >
+                  View All <FaArrowRight size={10} />
                 </button>
               </div>
               {loading ? (
-                <div className="flex justify-center items-center h-32">
-                  <ClimbingBoxLoader color="#CC0D49" size={20} />
+                <div className="flex justify-center h-28 items-center">
+                  <ClimbingBoxLoader color="#CC0D49" size={15} />
                 </div>
-              ) : payrolls.length === 0 ? (
-                <div className="text-center text-gray-500 py-8">
-                  <p className="text-lg">No payslips available yet</p>
-                </div>
+              ) : recentPayrolls.length === 0 ? (
+                <div className="text-center text-gray-400 py-8 text-sm">No payslips available yet</div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {payrolls.slice(0, 4).map((payslipData) => {
-                    const netPay =
-                      (parseFloat(payslipData.payroll_amount) || 0) -
-                      (parseFloat(payslipData.deduction) || 0);
-
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {recentPayrolls.map((p) => {
+                    const net = (parseFloat(p.payroll_amount) || 0) - (parseFloat(p.deduction) || 0);
                     return (
-                      <div
-                        key={payslipData.id}
-                        className="border border-slate-200 rounded-xl p-4 hover:shadow-md transition-all duration-300 hover:border-indigo-200"
-                      >
-                        <h4 className="font-semibold text-gray-800 mb-2">
-                          {payslipData.pay_month}
-                        </h4>
-                        <p className="text-lg font-bold text-green-600 mb-3">
-                          ₹{netPay.toLocaleString()}
-                        </p>
-                        <button
-                          onClick={() => handleDownload(payslipData)}
-                          className="w-full bg-primary-600 hover:bg-primary-700 text-white py-2 px-3 rounded-lg transition-colors text-sm font-medium"
-                        >
-                          Download Payslip
-                        </button>
+                      <div key={p.id} className="rounded-xl border border-primary-100 overflow-hidden hover:shadow-md transition-shadow">
+                        <div className="bg-gradient-to-r from-primary-600 to-primary-400 px-4 py-3 flex items-center justify-between">
+                          <div>
+                            <p className="text-[10px] text-primary-100 uppercase tracking-wider">Payslip</p>
+                            <h4 className="text-sm font-bold text-white mt-0.5">{p.pay_month}</h4>
+                          </div>
+                          <FaMoneyBillWave size={14} className="text-white/70" />
+                        </div>
+                        <div className="px-4 py-3 space-y-1.5 text-xs bg-white">
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Mode</span>
+                            <span className="font-medium text-gray-700">{p.mode_of_payment || "—"}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Gross</span>
+                            <span className="font-medium text-gray-700">₹{parseFloat(p.payroll_amount).toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Deductions</span>
+                            <span className="font-medium text-red-500">₹{(parseFloat(p.deduction) || 0).toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between pt-1.5 border-t border-gray-100">
+                            <span className="font-semibold text-gray-600">Net Pay</span>
+                            <span className="font-bold text-primary-700">₹{net.toLocaleString()}</span>
+                          </div>
+                        </div>
+                        <div className="px-4 py-2.5 bg-gray-50 border-t border-gray-100">
+                          <button
+                            onClick={() => handleDownload(p)}
+                            className="w-full flex items-center justify-center gap-1.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium py-2 rounded-lg transition-colors"
+                          >
+                            <FaDownload size={11} /> Download
+                          </button>
+                        </div>
                       </div>
                     );
                   })}
@@ -529,6 +667,7 @@ function WelcomeEmployee() {
             </div>
           </div>
         );
+      }
 
       case "payrolls":
         return (
@@ -1034,6 +1173,17 @@ function WelcomeEmployee() {
             <LeaveRequest
               onClose={() => setIsLeaveModalOpen(false)}
               remainingLeaves={remainingLeaves}
+              onSuccess={() => fetchEmployeeData({ showLoader: false })}
+            />
+          </div>
+        </div>
+      )}
+
+      {isWFHModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="relative">
+            <WorkFromHomeRequest
+              onClose={() => setIsWFHModalOpen(false)}
               onSuccess={() => fetchEmployeeData({ showLoader: false })}
             />
           </div>
