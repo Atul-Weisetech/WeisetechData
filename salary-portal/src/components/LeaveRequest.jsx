@@ -154,7 +154,7 @@ function LeaveRequest({ onClose, embedded = false, onSuccess, remainingLeaves })
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-3 right-3 rounded-full p-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 shadow-sm transition-all"
+          className="absolute top-3 right-3 rounded-full p-1.5 bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 shadow-sm transition-all"
           aria-label="Close"
         >
           ✕

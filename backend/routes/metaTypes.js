@@ -6,5 +6,7 @@ const payrollController = require("../controllers/payrollController");
 // For now, we’ll reuse payrollController.
 router.get("/", payrollController.getPayrollMetaTypes);
 router.post("/", payrollController.addPayrollMetaType);
+router.put("/:id", payrollController.updatePayrollMetaType);
+router.delete("/:id", payrollController.deletePayrollMetaType);
 
 module.exports = router;

@@ -112,9 +112,12 @@ function ManageLeaveRequests() {
     {
       name: "Employee",
       selector: (row) => (row.employee_name || "").toLowerCase(),
-      cell: (row) => (
-        <div className="text-sm font-medium text-gray-900">{row.employee_name}</div>
-      ),
+      cell: (row) => {
+        const cap = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "";
+        const parts = (row.employee_name || "").split(" ");
+        const name = parts.map(cap).join(" ");
+        return <div className="text-sm font-medium text-gray-900">{name}</div>;
+      },
       sortable: true,
       grow: 1,
     },
@@ -129,7 +132,7 @@ function ManageLeaveRequests() {
       name: "Days",
       selector: (row) => row.number_of_days,
       sortable: true,
-      width: "70px",
+      width: "80px",
     },
     {
       name: "Description",
@@ -157,16 +160,16 @@ function ManageLeaveRequests() {
         if (editingRequest?.id === row.id) {
           return (
             <div className="flex flex-col gap-1.5 py-1">
-              <div className="flex gap-1.5">
+              <div className="flex flex-nowrap gap-1.5">
                 <button
                   onClick={() => handleStatusUpdate(row.id, "approved")}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium bg-green-600 text-white hover:bg-green-700 transition-colors"
+                  className="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium bg-green-600 text-white hover:bg-green-700 transition-colors whitespace-nowrap"
                 >
                   <Check size={11} /> Approve
                 </button>
                 <button
                   onClick={() => handleStatusUpdate(row.id, "declined")}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium bg-red-600 text-white hover:bg-red-700 transition-colors"
+                  className="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium bg-red-600 text-white hover:bg-red-700 transition-colors whitespace-nowrap"
                 >
                   <X size={11} /> Decline
                 </button>
@@ -183,16 +186,16 @@ function ManageLeaveRequests() {
 
         if (status === "requested") {
           return (
-            <div className="flex gap-1.5">
+            <div className="flex flex-nowrap gap-1.5">
               <button
                 onClick={() => handleStatusUpdate(row.id, "approved")}
-                className="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium bg-green-600 text-white hover:bg-green-700 transition-colors"
+                className="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium bg-green-600 text-white hover:bg-green-700 transition-colors whitespace-nowrap"
               >
                 <Check size={11} /> Approve
               </button>
               <button
                 onClick={() => handleStatusUpdate(row.id, "declined")}
-                className="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium bg-red-600 text-white hover:bg-red-700 transition-colors"
+                className="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium bg-red-600 text-white hover:bg-red-700 transition-colors whitespace-nowrap"
               >
                 <X size={11} /> Decline
               </button>
@@ -217,6 +220,7 @@ function ManageLeaveRequests() {
         );
       },
       ignoreRowClick: true,
+      minWidth: "185px",
       grow: 1,
     },
   ];

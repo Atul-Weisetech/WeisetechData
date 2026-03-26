@@ -128,7 +128,7 @@ export default function EmployeeLeaves() {
         <div className="flex items-center justify-between gap-3">
           <button
             onClick={() => navigate("/welcome?view=employees")}
-            className="flex items-center gap-2 text-gray-600 hover:text-blue-700 transition text-sm font-medium"
+            className="flex items-center gap-2 text-gray-600 hover:text-red-600 transition text-sm font-medium"
           >
             <FaArrowLeft size={13} /> Back
           </button>

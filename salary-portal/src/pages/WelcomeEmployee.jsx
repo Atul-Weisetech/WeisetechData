@@ -6,6 +6,7 @@ import {
   FaBell,
   FaCalendarAlt,
   FaHome,
+  FaDownload,
 } from "react-icons/fa";
 import LeaveRequest from "../components/LeaveRequest";
 import EmployeeTimeTracker from "../components/EmployeeTimeTracker";
@@ -33,6 +34,8 @@ function WelcomeEmployee() {
   const [leaveList, setLeaveList] = useState([]);
   const [leaveFilter, setLeaveFilter] = useState("all");
   const [wfhFilter, setWfhFilter] = useState("all");
+  const [payrollPage, setPayrollPage] = useState(1);
+  const PAYROLLS_PER_PAGE = 8;
   const [reviewedUpdatesCount, setReviewedUpdatesCount] = useState(0);
   const [lastSeenReviewedCount, setLastSeenReviewedCount] = useState(0);
   const [unreadAppNotificationsCount, setUnreadAppNotificationsCount] = useState(0);
@@ -488,7 +491,7 @@ function WelcomeEmployee() {
               </div>
               {loading ? (
                 <div className="flex justify-center items-center h-32">
-                  <ClimbingBoxLoader color="#6366F1" size={20} />
+                  <ClimbingBoxLoader color="#CC0D49" size={20} />
                 </div>
               ) : payrolls.length === 0 ? (
                 <div className="text-center text-gray-500 py-8">
@@ -509,9 +512,6 @@ function WelcomeEmployee() {
                         <h4 className="font-semibold text-gray-800 mb-2">
                           {payslipData.pay_month}
                         </h4>
-                        <p className="text-sm text-gray-600 mb-1">
-                          Employee ID: {payslipData.fk_employee_id}
-                        </p>
                         <p className="text-lg font-bold text-green-600 mb-3">
                           ₹{netPay.toLocaleString()}
                         </p>
@@ -549,58 +549,107 @@ function WelcomeEmployee() {
               <div className="text-center text-gray-500 py-16">
                 <p className="text-xl">No payslips available yet</p>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {payrolls.map((payslipData) => {
-                  const netPay =
-                    (parseFloat(payslipData.payroll_amount) || 0) -
-                    (parseFloat(payslipData.deduction) || 0);
+            ) : (() => {
+                const sortedPayrolls = [...payrolls].sort((a, b) => b.id - a.id);
+                const totalPages = Math.ceil(sortedPayrolls.length / PAYROLLS_PER_PAGE);
+                const paginated = sortedPayrolls.slice(
+                  (payrollPage - 1) * PAYROLLS_PER_PAGE,
+                  payrollPage * PAYROLLS_PER_PAGE
+                );
+                return (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 lg:gap-5 2xl:gap-6">
+                      {paginated.map((payslipData) => {
+                        const netPay =
+                          (parseFloat(payslipData.payroll_amount) || 0) -
+                          (parseFloat(payslipData.deduction) || 0);
+                        return (
+                          <div
+                            key={payslipData.id}
+                            className="rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-primary-100 overflow-hidden"
+                          >
+                            {/* Themed gradient header */}
+                            <div className="bg-gradient-to-r from-primary-600 to-primary-400 px-4 lg:px-5 py-3 lg:py-4 flex items-center justify-between">
+                              <div>
+                                <p className="text-[10px] lg:text-xs font-medium text-primary-100 uppercase tracking-wider">Payslip</p>
+                                <h3 className="text-sm lg:text-base font-bold text-white mt-0.5 leading-tight">
+                                  {payslipData.pay_month}
+                                </h3>
+                              </div>
+                              <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                                <FaMoneyBillWave className="text-white" size={14} />
+                              </div>
+                            </div>
 
-                  return (
-                    <div
-                      key={payslipData.id}
-                      className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-indigo-100 p-6"
-                    >
-                      <div className="w-full h-2 rounded-t-xl bg-gradient-to-r from-indigo-400 to-purple-400 mb-4" />
-                      <h3 className="text-lg font-bold text-slate-800 text-center mb-4">
-                        {payslipData.pay_month}
-                      </h3>
-                      <div className="space-y-3 text-sm">
-                        <p>
-                          <span className="font-semibold">Employee ID:</span>{" "}
-                          {payslipData.fk_employee_id}
-                        </p>
-                        <p>
-                          <span className="font-semibold">Payment Mode:</span>{" "}
-                          {payslipData.mode_of_payment}
-                        </p>
-                        <p>
-                          <span className="font-semibold">Gross Salary:</span> ₹
-                          {parseFloat(
-                            payslipData.payroll_amount
-                          ).toLocaleString()}
-                        </p>
-                        <p>
-                          <span className="font-semibold">Deductions:</span> ₹
-                          {(
-                            parseFloat(payslipData.deduction) || 0
-                          ).toLocaleString()}
-                        </p>
-                        <p className="font-bold text-slate-900 text-lg">
-                          Net Pay: ₹{netPay.toLocaleString()}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => handleDownload(payslipData)}
-                        className="w-full mt-4 bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 rounded-xl transition-all duration-300 shadow-md hover:shadow-lg"
-                      >
-                        Download Payslip
-                      </button>
+                            {/* Card body */}
+                            <div className="bg-white px-4 lg:px-5 py-3 lg:py-4 space-y-2 lg:space-y-2.5">
+                              <div className="flex justify-between items-center gap-2">
+                                <span className="text-[11px] lg:text-xs text-gray-500 shrink-0">Payment Mode</span>
+                                <span className="text-[11px] lg:text-xs font-medium text-gray-800 text-right">{payslipData.mode_of_payment || "—"}</span>
+                              </div>
+                              <div className="flex justify-between items-center gap-2">
+                                <span className="text-[11px] lg:text-xs text-gray-500 shrink-0">Gross Salary</span>
+                                <span className="text-[11px] lg:text-xs font-medium text-gray-800">₹{parseFloat(payslipData.payroll_amount).toLocaleString()}</span>
+                              </div>
+                              <div className="flex justify-between items-center gap-2">
+                                <span className="text-[11px] lg:text-xs text-gray-500 shrink-0">Deductions</span>
+                                <span className="text-[11px] lg:text-xs font-medium text-red-500">₹{(parseFloat(payslipData.deduction) || 0).toLocaleString()}</span>
+                              </div>
+                              <div className="flex justify-between items-center gap-2 pt-2 border-t border-gray-100">
+                                <span className="text-xs lg:text-sm font-semibold text-gray-700 shrink-0">Net Pay</span>
+                                <span className="text-sm lg:text-base font-bold text-primary-700">₹{netPay.toLocaleString()}</span>
+                              </div>
+                            </div>
+
+                            {/* Download button */}
+                            <div className="bg-gray-50 px-4 lg:px-5 py-2.5 lg:py-3 border-t border-gray-100">
+                              <button
+                                onClick={() => handleDownload(payslipData)}
+                                className="w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 lg:py-2.5 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md text-xs lg:text-sm"
+                              >
+                                <FaDownload size={12} />
+                                Download Payslip
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  );
-                })}
-              </div>
-            )}
+
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-center gap-2 mt-8">
+                        <button
+                          onClick={() => setPayrollPage((p) => Math.max(1, p - 1))}
+                          disabled={payrollPage === 1}
+                          className="px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        >
+                          Previous
+                        </button>
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                          <button
+                            key={page}
+                            onClick={() => setPayrollPage(page)}
+                            className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
+                              page === payrollPage
+                                ? "bg-primary-600 text-white shadow-sm"
+                                : "border border-slate-200 text-slate-600 hover:bg-slate-50"
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        ))}
+                        <button
+                          onClick={() => setPayrollPage((p) => Math.min(totalPages, p + 1))}
+                          disabled={payrollPage === totalPages}
+                          className="px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
           </div>
         );
 
@@ -710,7 +759,7 @@ function WelcomeEmployee() {
                     sortable: true,
                     grow: 1,
                   },
-                  { name: "Days", selector: (r) => r.number_of_days, sortable: true, width: "65px" },
+                  { name: "Days", selector: (r) => r.number_of_days, sortable: true, width: "85px" },
                   {
                     name: "Reason",
                     selector: (r) => r.description,
@@ -719,23 +768,24 @@ function WelcomeEmployee() {
                         {r.description || "—"}
                       </span>
                     ),
-                    grow: 2,
+                    grow: 1,
                   },
                   {
                     name: "Status",
                     selector: (r) => (r.status_text || r.status || "").toLowerCase(),
                     cell: (r) => getStatusBadge(r.status_text || r.status),
                     sortable: true,
-                    grow: 1,
+                    grow: 2,
                   },
                   {
                     name: "Applied On",
                     selector: (r) => r.applied_date,
                     cell: (r) => r.applied_date ? new Date(r.applied_date).toLocaleDateString() : "—",
                     sortable: true,
-                    grow: 1,
+                    grow: 2,
                   },
-                  { name: "Reviewed By", selector: (r) => (r.reviewed_by || "").toLowerCase(), cell: (r) => r.reviewed_by || "—", sortable: true, grow: 1 },
+                  { name: "Reviewed By", selector: (r) => (r.reviewed_by || "").toLowerCase(),
+                     cell: (r) => r.reviewed_by || "—", sortable: true, grow: 2 },
                 ]}
                 data={filteredLeaves}
                 pagination
@@ -824,16 +874,16 @@ function WelcomeEmployee() {
                     selector: (r) => r.from_date,
                     cell: (r) => r.from_date ? new Date(r.from_date).toLocaleDateString() : "—",
                     sortable: true,
-                    grow: 1,
+                    grow: 0.5,
                   },
                   {
                     name: "To",
                     selector: (r) => r.to_date,
                     cell: (r) => r.to_date ? new Date(r.to_date).toLocaleDateString() : "—",
                     sortable: true,
-                    grow: 1,
+                    grow: 0.5,
                   },
-                  { name: "Days", selector: (r) => r.number_of_days, sortable: true, width: "65px" },
+                  { name: "Days", selector: (r) => r.number_of_days, sortable: true, width: "85px" },
                   {
                     name: "Reason",
                     selector: (r) => (r.description || "").toLowerCase(),
@@ -842,28 +892,28 @@ function WelcomeEmployee() {
                         {r.description || "—"}
                       </span>
                     ),
-                    grow: 2,
+                    grow: 1,
                   },
                   {
                     name: "Status",
                     selector: (r) => (r.status_text || r.status || "").toLowerCase(),
                     cell: (r) => getWfhStatusBadge(r.status_text || r.status),
                     sortable: true,
-                    grow: 1,
+                    grow: 1.2,
                   },
                   {
                     name: "Applied On",
                     selector: (r) => r.applied_date,
                     cell: (r) => r.applied_date ? new Date(r.applied_date).toLocaleDateString() : "—",
                     sortable: true,
-                    grow: 1,
+                    grow: 1.5,
                   },
                   {
                     name: "Reviewed By",
                     selector: (r) => (r.reviewed_by || "").toLowerCase(),
-                    cell: (r) => r.reviewed_by || "—",
+                    cell: (r) => r.reviewed_by || "Pending",
                     sortable: true,
-                    grow: 1,
+                    grow: 1.5,
                   },
                 ]}
                 data={filteredWfh}

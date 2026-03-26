@@ -102,8 +102,8 @@ export default function ViewBreakdownPopup({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex justify-center items-center z-50">
       <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 w-full max-w-lg relative max-h-[90vh] overflow-y-auto">
-        <button onClick={onClose} className="absolute top-3 right-3 text-gray-500 hover:text-gray-800">✖</button>
-        <h2 className="text-xl font-bold text-center text-blue-700 mb-4">Manage Breakdownnnn</h2>
+        <button onClick={onClose} className="absolute top-3 right-3 text-primary-600 hover:text-red-600">✕</button>
+        <h2 className="text-xl font-bold text-center text-gray-900 mb-4">Manage Breakdown</h2>
 
         {toast.show && (
           <div className={`mb-3 px-3 py-2 rounded ${toast.type === "success" ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"}`}>

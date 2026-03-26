@@ -5,7 +5,6 @@ import API_BASE from "../config";
 import {
   FaUsers,
   FaMoneyBillWave,
-  FaHistory,
   FaCalendarAlt,
   FaHome,
   FaExclamationTriangle,
@@ -36,7 +35,6 @@ export default function Sidebar({ onSelect, className = "" }) {
     pathname.startsWith("/add-payroll") ||
     pathname.startsWith("/edit-payroll");
 
-  const isPreviousPayrollsActive = search.includes("view=previous");
   const isLeaveRequestActive = search.includes("view=LeaveRequest");
   const isWorkFromHomeActive = search.includes("view=WorkFromHome");
   const isPerformanceActive = search.includes("view=performance");
@@ -115,18 +113,6 @@ export default function Sidebar({ onSelect, className = "" }) {
         >
           <FaMoneyBillWave size={20} className="shrink-0" />
           <span>Manage Payroll</span>
-        </li>
-
-        {/* Previous Payrolls */}
-        <li
-          title="Previous Payrolls"
-          className={`${itemBase} ${isPreviousPayrollsActive ? activeClass : inactiveClass}`}
-          onClick={() =>
-            onSelect?.("previous") || navigate("/welcome?view=previous")
-          }
-        >
-          <FaHistory size={20} className="shrink-0" />
-          <span>Previous Payrolls</span>
         </li>
 
         {/* Manage Leave Request */}

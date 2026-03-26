@@ -43,7 +43,7 @@ export default function AddHR() {
         <button
           type="button"
           onClick={() => navigate("/welcome")}
-          className="flex items-center gap-2 text-gray-600 hover:text-blue-700 transition text-sm font-medium"
+          className="flex items-center gap-2 text-gray-600 hover:text-red-600 transition text-sm font-medium"
         >
           <FaArrowLeft size={13} /> Back
         </button>

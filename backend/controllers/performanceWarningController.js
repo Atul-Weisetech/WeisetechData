@@ -291,8 +291,11 @@ const getPerformanceWarningById = async (req, res) => {
     }
 
     const warning = await query(
-      `SELECT id, employee_id, employee_name, overall_notes, created_by, created_at, updated_at
-       FROM ${TABLE} WHERE id = ?`,
+      `SELECT pw.id, pw.employee_id, pw.employee_name, pw.overall_notes, pw.created_by, pw.created_at, pw.updated_at,
+              e.designation
+       FROM ${TABLE} pw
+       LEFT JOIN tbl_employee e ON e.id = pw.employee_id
+       WHERE pw.id = ?`,
       [warning_id]
     );
 
@@ -310,7 +313,8 @@ const getPerformanceWarningById = async (req, res) => {
       id_performance_warning: warning[0].id,
       employee: {
         id: warning[0].employee_id || null,
-        name: warning[0].employee_name || `Employee ${warning[0].employee_id || 'Unknown'}`
+        name: warning[0].employee_name || `Employee ${warning[0].employee_id || 'Unknown'}`,
+        designation: warning[0].designation || null
       },
       overall_note: warning[0].overall_notes || '',
       warning_types: types.map(t => ({

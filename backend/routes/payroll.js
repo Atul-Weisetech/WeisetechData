@@ -16,8 +16,10 @@ router.post("/employeeBreakdown/breakdown", payrollController.addPayrollBreakdow
 router.put("/employeeBreakdown/:id", payrollController.updatePayrollBreakdown);
 router.delete("/employeeBreakdown/:id", payrollController.deletePayrollBreakdown);
 
-// Publish
+// Publish single
 router.post("/publish/:id", payrollController.publishPayroll);
+// Publish all unpublished payrolls for a given month (e.g. "March 2025")
+router.post("/publish-all/:monthKey", payrollController.publishAllForMonth);
 
 // Generic id routes after specific ones
 router.get("/:id", payrollController.getPayrollById);

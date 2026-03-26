@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaArrowLeft } from "react-icons/fa";
+import { FileText, Users, Tag } from "lucide-react";
 import AddPayrollBreakdown from "./AddPayrollBreakdown"; // adjust path if different
 import API_BASE from "../config";
 
@@ -208,19 +209,19 @@ export default function AddPayroll() {
   return (
     <>
       <div className="p-4 sm:p-6">
-        <header className="flex items-center justify-between gap-3 mb-6">
+        <div className="mb-6">
           <button
             onClick={() => navigate("/welcome?view=payroll")}
-            className="flex items-center gap-2 text-gray-600 hover:text-blue-700 transition text-sm font-medium"
+            className="flex items-center gap-2 text-gray-600 hover:text-red-600 transition text-sm font-medium mb-3"
           >
             <FaArrowLeft size={13} /> Back
           </button>
-          <h1 className="text-xl sm:text-2xl font-bold text-blue-700">Generate Payroll</h1>
-          <div className="w-16" />
-        </header>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <FileText size={22} className="text-primary-600" /> Generate Payroll
+          </h1>
+        </div>
 
         <div className="bg-white w-full max-w-2xl mx-auto rounded-lg shadow p-6">
-          <h2 className="text-lg sm:text-xl font-semibold mb-4 text-blue-600">Generate Payroll</h2>
 
           <label className="block mb-1 font-medium">Select Employee</label>
           <select
@@ -229,11 +230,14 @@ export default function AddPayroll() {
             className="w-full mb-3 px-4 py-2 border rounded"
           >
             <option value="">Select</option>
-            {employees.map((emp) => (
-              <option key={emp.employee_id} value={emp.employee_id}>
-                {emp.first_name} {emp.last_name}
-              </option>
-            ))}
+            {employees.map((emp) => {
+              const cap = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "";
+              return (
+                <option key={emp.employee_id} value={emp.employee_id}>
+                  {cap(emp.first_name)} {cap(emp.last_name)}
+                </option>
+              );
+            })}
           </select>
 
           <input

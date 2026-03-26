@@ -142,7 +142,7 @@ function CreatePerformanceWarning({ onCancel, onSuccess }) {
       <div className="flex items-center justify-between mb-6">
         <button
           onClick={onCancel}
-          className="flex items-center gap-2 text-gray-600 hover:text-blue-700 transition text-sm font-medium"
+          className="flex items-center gap-2 text-gray-600 hover:text-red-600 transition text-sm font-medium"
         >
           <FaArrowLeft size={13} /> Back
         </button>
@@ -160,14 +160,14 @@ function CreatePerformanceWarning({ onCancel, onSuccess }) {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Employee Selection */}
           <div>
-            <label htmlFor="employee_id" className="block text-sm font-semibold text-gray-700 mb-2">
+            <label htmlFor="employee_id" className="block text-sm font-semibold text-gray-700 mb-1">
               Select Employee <span className="text-red-500">*</span>
             </label>
             <select
               id="employee_id"
               value={employeeId}
               onChange={(e) => setEmployeeId(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               required
             >
               <option value="">-- Select Employee --</option>
@@ -206,7 +206,7 @@ function CreatePerformanceWarning({ onCancel, onSuccess }) {
                   className="p-4 border border-gray-200 rounded-lg bg-gray-50/50 space-y-3"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Warning #{index + 1}</span>
+                    <span className="text-sm font-medium text-gray-700">Warning {index + 1}</span>
                     {warnings.length > 1 && (
                       <button
                         type="button"

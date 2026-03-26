@@ -145,7 +145,7 @@ export default function EmployeeDetail() {
       {/* Back */}
       <button
         onClick={() => navigate("/welcome?view=employees")}
-        className="flex items-center gap-2 text-gray-600 hover:text-blue-700 transition text-sm font-medium mb-4"
+        className="flex items-center gap-2 text-gray-600 hover:text-red-600 transition text-sm font-medium mb-4"
       >
         <FaArrowLeft size={13} /> Back
       </button>

@@ -95,9 +95,9 @@ export default function AddPayrollBreakdown({ isOpen, onClose }) {
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 text-gray-500 hover:text-gray-800"
+          className="absolute top-3 right-3 text-primary-600 hover:text-red-600"
         >
-          ✖
+          ✕
         </button>
 
         <form onSubmit={formik.handleSubmit} className="space-y-4">
@@ -114,11 +114,14 @@ export default function AddPayrollBreakdown({ isOpen, onClose }) {
               className="w-full border px-3 py-2 rounded focus:ring-2 focus:ring-blue-400"
             >
               <option value="">Select Employee</option>
-              {employeesWithPayroll.map((emp) => (
-                <option key={emp.employee_id} value={emp.employee_id}>
-                  {emp.first_name} {emp.last_name}
-                </option>
-              ))}
+              {employeesWithPayroll.map((emp) => {
+                const cap = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "";
+                return (
+                  <option key={emp.employee_id} value={emp.employee_id}>
+                    {cap(emp.first_name)} {cap(emp.last_name)}
+                  </option>
+                );
+              })}
             </select>
             {formik.touched.fk_employee_id && formik.errors.fk_employee_id && (
               <p className="text-red-500 text-sm">{formik.errors.fk_employee_id}</p>

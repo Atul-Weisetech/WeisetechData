@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import DataTable from "react-data-table-component";
 import { FaEdit, FaUserSlash, FaMoneyBillWave, FaCalendarAlt, FaEllipsisV, FaSearch, FaTimes, FaTrash, FaCheckCircle, FaEye } from "react-icons/fa";
+import { FileText, Users, Tag } from "lucide-react";
 import { toast } from "react-toastify";
 import AddPayrollBreakdown from "./AddPayrollBreakdown";
 import AddPayrollMetaTypes from "./AddPayrollMetaTypes";
@@ -373,10 +374,10 @@ export default function Welcome() {
     }
 
     try {
-      for (const rec of unpublished) {
-        await axios.post(`${API_BASE}/api/payrolls/publish/${rec.id}`);
-      }
-      toast.success(`Published ${unpublished.length} payroll(s) for ${formatMonth(monthKey)}.`);
+      const res = await axios.post(
+        `${API_BASE}/api/payrolls/publish-all/${encodeURIComponent(monthKey)}`
+      );
+      toast.success(res.data?.message || `Published ${unpublished.length} payroll(s) for ${formatMonth(monthKey)}.`);
       fetchPayrolls();
     } catch (err) {
       toast.error("Error occurred while publishing payrolls.");
@@ -413,9 +414,14 @@ export default function Welcome() {
     }
   };
 
+  const cap = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "";
   const getEmployeeName = (id) => {
     const emp = employees.find((e) => e.employee_id === id);
-    return emp ? `${emp.first_name} ${emp.last_name}` : id;
+    return emp ? `${cap(emp.first_name)} ${cap(emp.last_name)}` : String(id);
+  };
+  const getEmployeeRole = (id) => {
+    const emp = employees.find((e) => e.employee_id === id);
+    return emp?.designation || "—";
   };
 
   const monthsList = [
@@ -666,21 +672,21 @@ export default function Welcome() {
               <div className="hidden sm:flex items-center gap-1.5 sm:gap-3 mt-4 overflow-x-auto">
                 <button
                   onClick={() => navigate("/add-payroll")}
-                  className="bg-primary-600 text-white px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded hover:bg-primary-700 whitespace-nowrap shrink-0"
+                  className="bg-primary-600 text-white px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded hover:bg-primary-700 whitespace-nowrap shrink-0 flex items-center gap-1.5"
                 >
-                   Generate Payroll
+                  <FileText size={14} /> Generate Payroll
                 </button>
                 <button
                   onClick={() => setIsGenerateAllOpen(true)}
-                  className="bg-primary-600 text-white px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded hover:bg-primary-700 whitespace-nowrap shrink-0"
+                  className="bg-primary-600 text-white px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded hover:bg-primary-700 whitespace-nowrap shrink-0 flex items-center gap-1.5"
                 >
-                  Generate All Payrolls
+                  <Users size={14} /> Generate All Payrolls
                 </button>
                 <button
                   onClick={() => setIsMetaTypeOpen(true)}
-                  className="bg-primary-600 text-white px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded hover:bg-primary-700 whitespace-nowrap shrink-0"
+                  className="bg-primary-600 text-white px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded hover:bg-primary-700 whitespace-nowrap shrink-0 flex items-center gap-1.5"
                 >
-                   Add Payroll Meta Types
+                  <Tag size={14} /> Add Payroll Meta Types
                 </button>
               </div>
             )}
@@ -714,7 +720,7 @@ export default function Welcome() {
               <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md relative">
                 <button
                   onClick={() => setIsGenerateAllOpen(false)}
-                  className="absolute top-3 right-3 text-gray-500 hover:text-gray-800"
+                  className="absolute top-3 right-3 text-primary-600 hover:text-primary-800"
                 >
                   <FaTimes size={14} />
                 </button>
@@ -886,6 +892,13 @@ export default function Welcome() {
                       cell: (p) => <span className="font-medium text-gray-800">{getEmployeeName(p.fk_employee_id)}</span>,
                       sortable: true,
                       grow: 2,
+                    },
+                    {
+                      name: "Role",
+                      selector: (p) => getEmployeeRole(p.fk_employee_id).toLowerCase(),
+                      cell: (p) => <span className="text-sm text-gray-600">{getEmployeeRole(p.fk_employee_id)}</span>,
+                      sortable: true,
+                      grow: 1,
                     },
                     {
                       name: "Amount",

@@ -1,5 +1,5 @@
 const db = require("../config/db");
-const nodemailer = require("nodemailer");
+const { sendPayrollEmail } = require("../services/emailService");
 
 const ensureBreakdownCategory = () => {
   // Ensure table exists first
@@ -211,9 +211,9 @@ exports.publishPayroll = (req, res) => {
   console.log("Publishing payroll for ID:", id);
 
   const query = `
-    SELECT p.*, e.email_address , e.first_name 
-    FROM tbl_employee_payroll p 
-    JOIN tbl_employee e ON p.fk_employee_id = e.id 
+    SELECT p.*, e.email_address, e.first_name, e.last_name, e.designation
+    FROM tbl_employee_payroll p
+    JOIN tbl_employee e ON p.fk_employee_id = e.id
     WHERE p.id = ?
   `;
 
@@ -225,86 +225,40 @@ exports.publishPayroll = (req, res) => {
     }
 
     const payroll = result[0];
-    console.log("Payroll found:", payroll);
 
     db.query(
       "UPDATE tbl_employee_payroll SET is_published = 1 WHERE id = ?",
       [id],
-      (err2) => {
+      async (err2) => {
         if (err2) {
           return res
             .status(500)
             .json({ message: "Error updating payroll", error: err2 });
         }
 
-        try {
-          const transporter = nodemailer.createTransport({
-            service: "gmail",
-            auth: {
-              user: process.env.EMAIL_USER,
-              pass: process.env.EMAIL_PASS,
-            },
-          });
+        const cap = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "";
+        const employeeName = `${cap(payroll.first_name)} ${cap(payroll.last_name)}`.trim();
 
-          const mailOptions = {
-            from: "omgajjar2609@gmail.com",
-            to: payroll.email_address,
-            subject: `Payroll Published for ${payroll.pay_month}`,
-            html: `
-    <div style="font-family: Arial, sans-serif; font-size: 14px;">
-      <p>Hello <strong>${payroll.first_name}</strong>,</p>
-      <p>Your payroll has been successfully published. Please find the details below:</p>
+        const { success, error: mailErr } = await sendPayrollEmail({
+          toEmail: payroll.email_address,
+          employeeName,
+          payMonth: payroll.pay_month,
+          amount: payroll.payroll_amount,
+          payDate: payroll.payroll_date,
+          modeOfPayment: payroll.mode_of_payment,
+          designation: payroll.designation || null,
+        });
 
-      <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%; max-width: 500px;">
-        <tr style="background-color: #f2f2f2;">
-          <th>Field</th>
-          <th>Details</th>
-        </tr>
-        <tr>
-          <td><strong>Employee Name</strong></td>
-          <td>${payroll.first_name}</td>
-        </tr>
-        <tr>
-          <td><strong>Published By</strong></td>
-          <td>HR Department</td>
-        </tr>
-        <tr>
-          <td><strong>Salary</strong></td>
-          <td>₹${parseFloat(payroll.payroll_amount).toFixed(2)}</td>
-        </tr>
-        <tr>
-          <td><strong>Deduction</strong></td>
-          <td>₹${parseFloat(payroll.deduction || 0).toFixed(2)}</td>
-        </tr>
-        <tr>
-          <td><strong>Month</strong></td>
-          <td>${payroll.pay_month}</td>
-        </tr>
-      </table>
-
-      <p style="margin-top: 16px;">Regards,<br>Weisetech HR Portal</p>
-    </div>
-  `,
-          };
-
-          transporter.sendMail(mailOptions, (mailErr, info) => {
-            if (mailErr) {
-              return res.status(201).json({
-                message: `Published, but email failed ${mailErr}`,
-                error: mailErr,
-              });
-            }
-
-            return res.status(200).json({
-              message: "Payroll published and email sent successfully",
-            });
-          });
-        } catch (err3) {
+        if (!success) {
           return res.status(201).json({
-            message: "Published, but email sending failed",
-            error: err3,
+            message: "Payroll published, but email could not be sent.",
+            error: mailErr?.message,
           });
         }
+
+        return res.status(200).json({
+          message: "Payroll published and email sent successfully!",
+        });
       }
     );
   });
@@ -313,11 +267,10 @@ exports.publishPayroll = (req, res) => {
 exports.publishAllForMonth = (req, res) => {
   const { monthKey } = req.params;
 
-  // 1. Get all unpublished payrolls for the month
   const query = `
-    SELECT p.*, e.email_address , e.first_name 
-    FROM tbl_employee_payroll p 
-    JOIN tbl_employee e ON p.fk_employee_id = e.id 
+    SELECT p.*, e.email_address, e.first_name, e.last_name, e.designation
+    FROM tbl_employee_payroll p
+    JOIN tbl_employee e ON p.fk_employee_id = e.id
     WHERE p.pay_month = ? AND p.is_published = 0
   `;
 
@@ -334,56 +287,47 @@ exports.publishAllForMonth = (req, res) => {
         .json({ message: "No unpublished payrolls found for this month." });
     }
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
+    const cap = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : "";
     let successCount = 0;
-    let failureCount = 0;
+    let emailFailCount = 0;
+    let dbFailCount = 0;
 
     for (const payroll of results) {
       try {
-        // 2. Update as published
+        // Mark as published
         await new Promise((resolve, reject) => {
           db.query(
             "UPDATE tbl_employee_payroll SET is_published = 1 WHERE id = ?",
             [payroll.id],
-            (err2) => {
-              if (err2) reject(err2);
-              else resolve();
-            }
+            (err2) => (err2 ? reject(err2) : resolve())
           );
         });
 
-        // 3. Send email
-        const mailOptions = {
-          from: process.env.EMAIL_USER,
-          to: payroll.email_address,
-          subject: `Payroll Published - ${payroll.pay_month}`,
-          text: `Dear ${payroll.first_name},\n\nYour payroll for ${payroll.pay_month} has been successfully published.\n\nAmount: ₹${payroll.payroll_amount}\nDate: ${payroll.payroll_date}\n\nRegards,\nHR Team`,
-        };
-
-        await new Promise((resolve, reject) => {
-          transporter.sendMail(mailOptions, (mailErr, info) => {
-            if (mailErr) reject(mailErr);
-            else resolve(info);
-          });
+        // Send themed email
+        const employeeName = `${cap(payroll.first_name)} ${cap(payroll.last_name)}`.trim();
+        const { success } = await sendPayrollEmail({
+          toEmail: payroll.email_address,
+          employeeName,
+          payMonth: payroll.pay_month,
+          amount: payroll.payroll_amount,
+          payDate: payroll.payroll_date,
+          modeOfPayment: payroll.mode_of_payment,
+          designation: payroll.designation || null,
         });
 
+        if (!success) emailFailCount++;
         successCount++;
       } catch (err) {
         console.error("Error processing payroll ID:", payroll.id, err);
-        failureCount++;
+        dbFailCount++;
       }
     }
 
-    return res.status(200).json({
-      message: `Published ${successCount} payroll(s), ${failureCount} failed.`,
-    });
+    const parts = [`Published ${successCount} payroll(s)`];
+    if (emailFailCount > 0) parts.push(`${emailFailCount} email(s) failed`);
+    if (dbFailCount > 0) parts.push(`${dbFailCount} record(s) failed to update`);
+
+    return res.status(200).json({ message: parts.join(", ") + "." });
   });
 };
 
@@ -552,6 +496,48 @@ exports.addPayrollMetaType = (req, res) => {
           .json({ message: "Error in adding meta type", error: err });
       }
       return res.status(201).json({ message: "Meta type added successfully" });
+    }
+  );
+};
+
+// Update a meta type
+exports.updatePayrollMetaType = (req, res) => {
+  const { id } = req.params;
+  const { type_name } = req.body;
+  if (!type_name) {
+    return res.status(400).json({ message: "Type name is required" });
+  }
+  db.query(
+    "UPDATE tbl_payroll_meta_types SET type_name = ?, updated_date = NOW() WHERE id = ?",
+    [type_name, id],
+    (err, result) => {
+      if (err) {
+        console.error("Update failed:", err);
+        return res.status(500).json({ message: "Error updating meta type", error: err });
+      }
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: "Meta type not found" });
+      }
+      return res.json({ message: "Meta type updated successfully" });
+    }
+  );
+};
+
+// Delete a meta type
+exports.deletePayrollMetaType = (req, res) => {
+  const { id } = req.params;
+  db.query(
+    "DELETE FROM tbl_payroll_meta_types WHERE id = ?",
+    [id],
+    (err, result) => {
+      if (err) {
+        console.error("Delete failed:", err);
+        return res.status(500).json({ message: "Error deleting meta type", error: err });
+      }
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: "Meta type not found" });
+      }
+      return res.json({ message: "Meta type deleted successfully" });
     }
   );
 };

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
-import { FaArrowLeft } from 'react-icons/fa';
+import { useState, useEffect, useRef } from 'react';
+import { X, MoreVertical } from 'lucide-react';
+import { FaArrowLeft, FaEye, FaEdit, FaTrash } from 'react-icons/fa';
 import axios from 'axios';
 import DataTable from 'react-data-table-component';
 import { useNotification } from '../contexts/NotificationContext';
@@ -24,6 +24,16 @@ function ViewPerformanceWarnings({ onBack }) {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [detailWarning, setDetailWarning] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setOpenMenuId(null);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const getWarningTypes = () => {
     try {
@@ -144,7 +154,6 @@ function ViewPerformanceWarnings({ onBack }) {
       setLoadingDetail(false);
     }
   };
-
   const formatDate = (dateStr) => {
     if (!dateStr) return '—';
     try {
@@ -287,29 +296,46 @@ function ViewPerformanceWarnings({ onBack }) {
             </button>
           </div>
         ) : (
-          <div className="flex flex-row flex-nowrap gap-2">
-            {(() => {
-              const created = row.created_at ? new Date(row.created_at) : null;
-              const within24h = created && (Date.now() - created.getTime()) < 24 * 60 * 60 * 1000;
-              return within24h ? (
-                <button
-                  onClick={() => handleEdit(row)}
-                  className="border border-gray-300 text-gray-600 bg-gray-200 px-3 py-1 rounded hover:bg-gray-300 font-medium text-xs whitespace-nowrap"
-                >
-                  Edit
-                </button>
-              ) : null;
-            })()}
+          <div className="relative" ref={openMenuId === row.id ? menuRef : null}>
             <button
-              onClick={() => handleDelete(row.id)}
-              className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 font-medium text-xs whitespace-nowrap"
+              onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === row.id ? null : row.id); }}
+              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 bg-white hover:bg-gray-100 text-gray-600 transition-colors"
             >
-              Delete
+              <MoreVertical size={14} />
             </button>
+            {openMenuId === row.id && (
+              <div className="absolute right-0 top-9 z-50 bg-white border border-gray-200 rounded-lg shadow-xl py-1 w-36">
+                <button
+                  onClick={() => { handleRowClick(row); setOpenMenuId(null); }}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 flex items-center gap-2"
+                >
+                  <FaEye size={12} className="text-primary-600" /> View Detail
+                </button>
+                {(() => {
+                  const created = row.created_at ? new Date(row.created_at) : null;
+                  const within24h = created && (Date.now() - created.getTime()) < 24 * 60 * 60 * 1000;
+                  return within24h ? (
+                    <button
+                      onClick={() => { handleEdit(row); setOpenMenuId(null); }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 flex items-center gap-2"
+                    >
+                      <FaEdit size={12} className="text-gray-500" /> Edit
+                    </button>
+                  ) : null;
+                })()}
+                <button
+                  onClick={() => { handleDelete(row.id); setOpenMenuId(null); }}
+                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                >
+                  <FaTrash size={12} className="text-red-500" /> Delete
+                </button>
+              </div>
+            )}
           </div>
         ),
       ignoreRowClick: true,
-      minWidth: "160px",
+      minWidth: "60px",
+      width: "80px",
       grow: 0,
     },
   ];
@@ -322,7 +348,7 @@ function ViewPerformanceWarnings({ onBack }) {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">View Performance Warnings</h1>
             <p className="text-lg text-gray-600">View and manage all performance warnings</p>
           </div>
-          <button onClick={onBack} className="flex items-center gap-2 text-gray-600 hover:text-blue-700 transition text-sm font-medium">
+          <button onClick={onBack} className="flex items-center gap-2 text-gray-600 hover:text-red-600 transition text-sm font-medium">
             <FaArrowLeft size={13} /> Back
           </button>
         </div>
@@ -359,7 +385,7 @@ function ViewPerformanceWarnings({ onBack }) {
               </div>
               <button
                 onClick={() => { setShowDetailModal(false); setDetailWarning(null); }}
-                className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+                className="text-gray-500 hover:text-red-600 text-2xl font-bold"
               >
                 ×
               </button>
@@ -373,20 +399,16 @@ function ViewPerformanceWarnings({ onBack }) {
                 </div>
               ) : detailWarning ? (
                 <div className="space-y-6">
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Employee Details</h3>
-                    <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <h3 className="text-base font-semibold text-gray-900 mb-2">Employee Details</h3>
+                    <div className="flex gap-8">
                       <div>
-                        <label className="text-sm font-medium text-gray-600">Employee Name</label>
-                        <p className="text-base text-gray-900 mt-1 capitalize">{detailWarning.employee?.name || detailWarning.employee_name || '—'}</p>
+                        <label className="text-xs font-medium text-gray-500">Employee Name</label>
+                        <p className="text-sm text-gray-900 mt-0.5 capitalize">{detailWarning.employee?.name || detailWarning.employee_name || '—'}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-600">Employee ID</label>
-                        <p className="text-base text-gray-900 mt-1">{detailWarning.employee?.id || detailWarning.employee_id || '—'}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-600">Role / Designation</label>
-                        <p className="text-base text-gray-900 mt-1">{detailWarning.employee?.designation || detailWarning.employee?.role || detailWarning.designation || '—'}</p>
+                        <label className="text-xs font-medium text-gray-500">Designation</label>
+                        <p className="text-sm text-gray-900 mt-0.5">{detailWarning.employee?.designation ||detailWarning.designation || '—'}</p>
                       </div>
                     </div>
                   </div>
@@ -403,7 +425,7 @@ function ViewPerformanceWarnings({ onBack }) {
                             {wt.description && (
                               <div className="mt-2">
                                 <label className="text-sm font-medium text-gray-600">Description</label>
-                                <p className="text-sm text-gray-900 mt-1 whitespace-pre-wrap">{wt.description}</p>
+                                <p className="text-sm text-gray-900 mt-1 whitespace-pre-wrap break-all" style={{ overflowWrap: 'anywhere' }}>{wt.description}</p>
                               </div>
                             )}
                           </div>
